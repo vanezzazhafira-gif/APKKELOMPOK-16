@@ -67,6 +67,35 @@ def cek_kondisi_roi(path_gambar, jenis, roi=None):
 
     return jenis, status, sisa
 
+def init_db():
+    conn = sqlite3.connect(DB_LOGIN)
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS data_pengguna (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT UNIQUE,
+            password TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+    conn = sqlite3.connect(DB_ANALISIS)
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS riwayat_pindai (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            komoditas TEXT,
+            kondisi TEXT,
+            sisa_segar TEXT,
+            suhu_simpan TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+init_db()
+
 # --- LOGIKA DATABASE (LOGIN & SIGNUP) ---
 def login(email, password):
     conn = sqlite3.connect(DB_LOGIN)
