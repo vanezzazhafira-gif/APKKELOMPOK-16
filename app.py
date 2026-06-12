@@ -81,7 +81,6 @@ def file_to_base64(path):
 
 login_bg = file_to_base64("login.jpeg")
 signup_bg = file_to_base64("signup.jpg")
-logo_img = file_to_base64("logo.png")
 
 
 # =========================
@@ -191,7 +190,7 @@ if "hasil" not in st.session_state:
 
 
 # =========================
-# CSS
+# GLOBAL CSS
 # =========================
 st.markdown("""
 <style>
@@ -213,42 +212,9 @@ header[data-testid="stHeader"] {
 }
 
 /* LOGIN & SIGNUP */
-.auth-wrap {
-    width: 536px;
-    min-height: 851px;
-    margin: 18px auto;
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    position: relative;
-    color: black;
-}
-
-.auth-bg {
-    position: absolute;
-    inset: 0;
-    background-size: cover;
-    background-position: center;
-    z-index: 0;
-}
-
-.auth-content {
-    position: relative;
-    z-index: 2;
-    padding: 1px 50px;
-}
-
-.login-space {
-    height: 280px;
-}
-
-.signup-space {
-    height: 250px;
-}
-
 .auth-input div[data-testid="stTextInput"] input {
     height: 70px;
-    background: rgba(255,255,255,0.96);
+    background: rgba(255,255,255,0.98);
     color: black;
     border: 1px solid #e2e2e2;
     font-size: 15px;
@@ -267,7 +233,7 @@ header[data-testid="stHeader"] {
 }
 
 .small-btn div.stButton > button {
-    width: 100px;
+    width: 105px;
     height: 24px;
     font-size: 11px;
     background: white;
@@ -278,7 +244,7 @@ header[data-testid="stHeader"] {
 
 .signup-input div[data-testid="stTextInput"] input {
     height: 42px;
-    background: rgba(255,255,255,0.96);
+    background: rgba(255,255,255,0.98);
     color: black;
     border: 1px solid #e2e2e2;
     font-size: 13px;
@@ -394,7 +360,6 @@ header[data-testid="stHeader"] {
 [data-testid="stDataFrame"] {
     background: white;
 }
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -405,17 +370,34 @@ header[data-testid="stHeader"] {
 if not st.session_state.login and st.session_state.page == "Login":
     bg = f"data:image/jpeg;base64,{login_bg}" if login_bg else ""
 
+    # Background dipasang langsung di block-container agar input berada DI ATAS gambar, bukan di bawah gambar.
     st.markdown(f"""
-    <div class="auth-wrap">
-        <div class="auth-bg" style="background-image:url('{bg}');"></div>
-        <div class="auth-content">
-            <div class="login-space"></div>
+    <style>
+    .block-container {{
+        max-width: 536px;
+        min-height: 851px;
+        margin: 18px auto;
+        padding-left: 50px;
+        padding-right: 50px;
+        background-image: url('{bg}');
+        background-size: cover;
+        background-position: center top;
+        background-repeat: no-repeat;
+        border-radius: 8px;
+        overflow: hidden;
+    }}
+    </style>
     """, unsafe_allow_html=True)
+
+    # Jarak dari atas sampai posisi Username seperti aplikasi PyQt
+    st.markdown('<div style="height:360px;"></div>', unsafe_allow_html=True)
 
     st.markdown('<div class="auth-input">', unsafe_allow_html=True)
     email = st.text_input("Username", placeholder="Username", label_visibility="collapsed")
     password = st.text_input("Password", type="password", placeholder="Password", label_visibility="collapsed")
     st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div style="height:18px;"></div>', unsafe_allow_html=True)
 
     st.markdown('<div class="auth-btn">', unsafe_allow_html=True)
     if st.button("LOG IN"):
@@ -426,9 +408,9 @@ if not st.session_state.login and st.session_state.page == "Login":
             st.error("Username atau Password Salah")
     st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div style="height:70px;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:65px;"></div>', unsafe_allow_html=True)
 
-    c1, c2, c3 = st.columns([2.2, 1, 1.2])
+    c1, c2 = st.columns([2.4, 1])
     with c1:
         st.markdown('<div class="auth-text">Have not account?</div>', unsafe_allow_html=True)
     with c2:
@@ -438,11 +420,6 @@ if not st.session_state.login and st.session_state.page == "Login":
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown("""
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
 
 # =========================
 # SIGNUP PAGE
@@ -451,11 +428,25 @@ elif not st.session_state.login and st.session_state.page == "Sign Up":
     bg = f"data:image/jpeg;base64,{signup_bg}" if signup_bg else ""
 
     st.markdown(f"""
-    <div class="auth-wrap">
-        <div class="auth-bg" style="background-image:url('{bg}');"></div>
-        <div class="auth-content">
-            <div class="signup-space"></div>
+    <style>
+    .block-container {{
+        max-width: 535px;
+        min-height: 849px;
+        margin: 18px auto;
+        padding-left: 140px;
+        padding-right: 115px;
+        background-image: url('{bg}');
+        background-size: cover;
+        background-position: center top;
+        background-repeat: no-repeat;
+        border-radius: 8px;
+        overflow: hidden;
+    }}
+    </style>
     """, unsafe_allow_html=True)
+
+    # Posisi input sesuai desain Sign Up PyQt
+    st.markdown('<div style="height:335px;"></div>', unsafe_allow_html=True)
 
     st.markdown('<div class="signup-input">', unsafe_allow_html=True)
     new_email = st.text_input("Email", placeholder="Email", label_visibility="collapsed")
@@ -463,7 +454,7 @@ elif not st.session_state.login and st.session_state.page == "Sign Up":
     confirm = st.text_input("Confirm Password", type="password", placeholder="Confirm Password", label_visibility="collapsed")
     st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div style="height:25px;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:22px;"></div>', unsafe_allow_html=True)
 
     st.markdown('<div class="signup-btn">', unsafe_allow_html=True)
     if st.button("Sign Up"):
@@ -477,9 +468,9 @@ elif not st.session_state.login and st.session_state.page == "Sign Up":
             st.error("Email sudah digunakan.")
     st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div style="height:45px;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:55px;"></div>', unsafe_allow_html=True)
 
-    c1, c2, c3 = st.columns([2.2, 0.8, 1.3])
+    c1, c2 = st.columns([2.8, 1])
     with c1:
         st.markdown('<div class="auth-text">Already have an account?</div>', unsafe_allow_html=True)
     with c2:
@@ -489,16 +480,23 @@ elif not st.session_state.login and st.session_state.page == "Sign Up":
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown("""
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
 
 # =========================
 # DASHBOARD PAGE
 # =========================
 else:
+    st.markdown("""
+    <style>
+    .block-container {
+        max-width: 1120px;
+        margin: 18px auto;
+        padding-left: 0px;
+        padding-right: 0px;
+        background: transparent;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     st.markdown('<div class="dashboard-page">', unsafe_allow_html=True)
     st.markdown(
         '<div class="dashboard-header">OPTIMALISASI DISTRIBUSI LOGISTIK HORTIKULTURA</div>',
