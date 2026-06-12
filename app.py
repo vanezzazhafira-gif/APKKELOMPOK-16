@@ -4,17 +4,98 @@ import cv2
 import numpy as np
 from PIL import Image
 import tempfile
+import os
+import base64
 
-st.set_page_config(page_title="Aplikasi Web Hortikultura", layout="wide")
+st.set_page_config(page_title="Optimalisasi Logistik Pertanian", layout="wide")
 
 DB_LOGIN = "manajemen_akses.db"
 DB_ANALISIS = "logistik_hortikultura.db"
 
+
+# =========================
+# DATABASE
+# =========================
+def init_db():
+    conn = sqlite3.connect(DB_LOGIN)
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS data_pengguna (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT UNIQUE,
+            password TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+    conn = sqlite3.connect(DB_ANALISIS)
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS riwayat_pindai (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            komoditas TEXT,
+            kondisi TEXT,
+            sisa_segar TEXT,
+            suhu_simpan TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+
+def login(email, password):
+    conn = sqlite3.connect(DB_LOGIN)
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM data_pengguna WHERE email=? AND password=?", (email, password))
+    user = cur.fetchone()
+    conn.close()
+    return user
+
+
+def signup(email, password):
+    conn = sqlite3.connect(DB_LOGIN)
+    cur = conn.cursor()
+    try:
+        cur.execute("INSERT INTO data_pengguna(email,password) VALUES (?,?)", (email, password))
+        conn.commit()
+        return True
+    except:
+        return False
+    finally:
+        conn.close()
+
+
+init_db()
+
+
+# =========================
+# HELPER IMAGE
+# =========================
+def file_to_base64(path):
+    if os.path.exists(path):
+        with open(path, "rb") as f:
+            return base64.b64encode(f.read()).decode()
+    return ""
+
+
+login_bg = file_to_base64("login.jpeg")
+signup_bg = file_to_base64("signup.jpg")
+logo_img = file_to_base64("logo.png")
+
+
+# =========================
+# ANALISIS OPENCV
+# =========================
 def rekomendasi_suhu(jenis):
-    if jenis == "Wortel": return "0 - 4 °C"
-    elif jenis == "Cabai": return "7 - 10 °C"
-    elif jenis == "Brokoli": return "0 - 2 °C"
+    if jenis == "Wortel":
+        return "0 - 4 °C"
+    elif jenis == "Cabai":
+        return "7 - 10 °C"
+    elif jenis == "Brokoli":
+        return "0 - 2 °C"
     return "-"
+
 
 def cek_kondisi_roi(path_gambar, jenis):
     img = cv2.imread(path_gambar)
@@ -46,6 +127,9 @@ def cek_kondisi_roi(path_gambar, jenis):
 
     mask_clean = mask_orange if jenis == "Wortel" else mask_red if jenis == "Cabai" else mask_green
 
+    if cv2.countNonZero(mask_clean) < 500:
+        return "Error", "Objek sayuran tidak terdeteksi jelas.", -1
+
     damage_pct = (
         cv2.countNonZero(
             cv2.bitwise_and(
@@ -67,262 +151,371 @@ def cek_kondisi_roi(path_gambar, jenis):
     mean_sat = np.mean(hsv[:, :, 1])
 
     score = 0
-    if damage_pct > 10: score += 4
-    elif damage_pct > 3: score += 2
-    if jenis in ["Brokoli", "Cabai"] and yellow_pct > 15: score += 2
-    if mean_sat < 60: score += 2
-    elif mean_sat < 90: score += 1
+    if damage_pct > 10:
+        score += 4
+    elif damage_pct > 3:
+        score += 2
+
+    if jenis in ["Brokoli", "Cabai"] and yellow_pct > 15:
+        score += 2
+
+    if mean_sat < 60:
+        score += 2
+    elif mean_sat < 90:
+        score += 1
 
     if score >= 4:
-        status, sisa = "BUSUK / RUSAK", 0
+        return jenis, "BUSUK / RUSAK", 0
     elif score >= 2:
-        status, sisa = "Kurang Segar", 2
+        return jenis, "Kurang Segar", 2
     else:
-        status, sisa = "Segar & Alami", 4
+        return jenis, "Segar & Alami", 4
 
-    return jenis, status, sisa
 
-def init_db():
-    conn = sqlite3.connect(DB_LOGIN)
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS data_pengguna (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT UNIQUE,
-            password TEXT
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-    conn = sqlite3.connect(DB_ANALISIS)
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS riwayat_pindai (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            komoditas TEXT,
-            kondisi TEXT,
-            sisa_segar TEXT,
-            suhu_simpan TEXT
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-def login(email, password):
-    conn = sqlite3.connect(DB_LOGIN)
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM data_pengguna WHERE email=? AND password=?", (email, password))
-    user = cur.fetchone()
-    conn.close()
-    return user
-
-def signup(email, password):
-    conn = sqlite3.connect(DB_LOGIN)
-    cur = conn.cursor()
-    try:
-        cur.execute("INSERT INTO data_pengguna(email,password) VALUES (?,?)", (email, password))
-        conn.commit()
-        return True
-    except:
-        return False
-    finally:
-        conn.close()
-
-init_db()
-
-st.markdown("""
-<style>
-.stApp {
-    background-color: #f2f2f2;
-}
-
-.block-container {
-    padding-top: 1.5rem;
-    max-width: 1120px;
-}
-
-.login-card, .signup-card {
-    background: white;
-    border-radius: 8px;
-    padding: 55px 70px;
-    max-width: 540px;
-    margin: auto;
-    box-shadow: 0 0 8px rgba(0,0,0,0.18);
-    text-align: center;
-}
-
-.login-title, .signup-title {
-    font-size: 42px;
-    font-weight: 800;
-    color: black;
-    text-align: center;
-    margin-bottom: 10px;
-}
-
-.login-subtitle, .signup-subtitle {
-    font-size: 20px;
-    font-weight: 700;
-    color: #315f38;
-    text-align: center;
-    margin-bottom: 35px;
-}
-
-.green-circle-top {
-    position: fixed;
-    right: -120px;
-    top: 70px;
-    width: 360px;
-    height: 360px;
-    background: #3f7d32;
-    border-radius: 50%;
-    z-index: 0;
-}
-
-.green-circle-bottom {
-    position: fixed;
-    left: -120px;
-    bottom: -160px;
-    width: 360px;
-    height: 360px;
-    background: #3f7d32;
-    border-radius: 50%;
-    z-index: 0;
-}
-
-.dashboard-header {
-    background-color: #145d1f;
-    color: white;
-    padding: 14px;
-    text-align: center;
-    font-size: 22px;
-    font-weight: 800;
-    margin-bottom: 10px;
-}
-
-.panel-box {
-    background: white;
-    border: 1px solid #999;
-    padding: 12px;
-    min-height: 560px;
-}
-
-.preview-box {
-    background: #ddd;
-    height: 335px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 8px;
-    color: black;
-}
-
-.result-box {
-    background: #f7f7f7;
-    padding: 18px;
-    font-family: monospace;
-    font-size: 16px;
-    white-space: pre-line;
-    border-bottom: 1px solid #aaa;
-    margin-bottom: 0;
-}
-
-div.stButton > button {
-    width: 100%;
-    border-radius: 0px;
-    color: white;
-    font-weight: 600;
-}
-
-</style>
-""", unsafe_allow_html=True)
-
+# =========================
+# SESSION
+# =========================
 if "login" not in st.session_state:
-    st.session_state["login"] = False
+    st.session_state.login = False
 
 if "page" not in st.session_state:
-    st.session_state["page"] = "Login"
+    st.session_state.page = "Login"
 
 if "hasil" not in st.session_state:
-    st.session_state["hasil"] = {
+    st.session_state.hasil = {
         "komoditas": "-",
         "kondisi": "-",
         "sisa": "-",
         "suhu": "-"
     }
 
-if not st.session_state["login"]:
-    menu = st.sidebar.selectbox("Navigasi", ["Login", "Sign Up"])
 
-    if menu == "Login":
-        st.markdown('<div class="green-circle-top"></div>', unsafe_allow_html=True)
-        st.markdown('<div class="green-circle-bottom"></div>', unsafe_allow_html=True)
+# =========================
+# CSS
+# =========================
+st.markdown("""
+<style>
+section[data-testid="stSidebar"] {
+    display: none;
+}
 
-        st.markdown('<div class="login-title">Log In</div>', unsafe_allow_html=True)
-        st.markdown(
-            '<div class="login-subtitle">Aplikasi Prediksi Kadaluwarsa Produk Holtikultura</div>',
-            unsafe_allow_html=True
-        )
+header[data-testid="stHeader"] {
+    display: none;
+}
 
-        email = st.text_input("Username")
-        password = st.text_input("Password", type="password")
+.stApp {
+    background: #111111;
+}
 
-        if st.button("LOG IN"):
-            if login(email, password):
-                st.session_state["login"] = True
-                st.success("Login Berhasil")
-                st.rerun()
-            else:
-                st.error("Username atau Password Salah")
+.block-container {
+    padding-top: 0rem;
+    padding-bottom: 0rem;
+}
 
-        st.markdown("#### Have not account?")
+/* LOGIN & SIGNUP */
+.auth-wrap {
+    width: 536px;
+    min-height: 851px;
+    margin: 18px auto;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    color: black;
+}
+
+.auth-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    z-index: 0;
+}
+
+.auth-content {
+    position: relative;
+    z-index: 2;
+    padding: 1px 50px;
+}
+
+.login-space {
+    height: 280px;
+}
+
+.signup-space {
+    height: 250px;
+}
+
+.auth-input div[data-testid="stTextInput"] input {
+    height: 70px;
+    background: rgba(255,255,255,0.96);
+    color: black;
+    border: 1px solid #e2e2e2;
+    font-size: 15px;
+}
+
+.auth-btn div.stButton > button {
+    width: 180px;
+    height: 50px;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    background: white;
+    color: black;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.small-btn div.stButton > button {
+    width: 100px;
+    height: 24px;
+    font-size: 11px;
+    background: white;
+    color: black;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.signup-input div[data-testid="stTextInput"] input {
+    height: 42px;
+    background: rgba(255,255,255,0.96);
+    color: black;
+    border: 1px solid #e2e2e2;
+    font-size: 13px;
+}
+
+.signup-btn div.stButton > button {
+    width: 120px;
+    height: 40px;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    background: white;
+    color: black;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.auth-text {
+    text-align: center;
+    font-size: 19px;
+    color: black;
+}
+
+/* DASHBOARD */
+.dashboard-page {
+    background: #eeeeee;
+    width: 1120px;
+    min-height: 660px;
+    margin: 18px auto;
+    border-radius: 0px;
+    overflow: hidden;
+    color: black;
+}
+
+.dashboard-header {
+    background: #145d1f;
+    color: white;
+    text-align: center;
+    padding: 12px;
+    font-size: 21px;
+    font-weight: 800;
+}
+
+.dashboard-body {
+    padding: 10px 15px;
+}
+
+.panel-box {
+    background: white;
+    border: 1px solid #999;
+    padding: 10px;
+    min-height: 575px;
+}
+
+.panel-title {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 10px;
+}
+
+.preview-box {
+    background: #dddddd;
+    height: 337px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: black;
+    margin-bottom: 4px;
+}
+
+.result-box {
+    background: #f7f7f7;
+    padding: 18px 0px 12px 275px;
+    font-family: monospace;
+    font-size: 16px;
+    white-space: pre-line;
+    border-bottom: 1px solid #999;
+}
+
+.blue-btn div.stButton > button {
+    background: #1976d2;
+    color: white;
+    border-radius: 0px;
+    width: 100%;
+    height: 35px;
+}
+
+.orange-btn div.stButton > button {
+    background: #ff9800;
+    color: white;
+    border-radius: 0px;
+    width: 100%;
+    height: 35px;
+}
+
+.purple-btn div.stButton > button {
+    background: #7b1fa2;
+    color: white;
+    border-radius: 0px;
+    width: 100%;
+    height: 35px;
+}
+
+.green-btn div.stButton > button {
+    background: #2e7d32;
+    color: white;
+    border-radius: 0px;
+    width: 100%;
+    height: 35px;
+    font-weight: 800;
+}
+
+[data-testid="stDataFrame"] {
+    background: white;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+
+# =========================
+# LOGIN PAGE
+# =========================
+if not st.session_state.login and st.session_state.page == "Login":
+    bg = f"data:image/jpeg;base64,{login_bg}" if login_bg else ""
+
+    st.markdown(f"""
+    <div class="auth-wrap">
+        <div class="auth-bg" style="background-image:url('{bg}');"></div>
+        <div class="auth-content">
+            <div class="login-space"></div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="auth-input">', unsafe_allow_html=True)
+    email = st.text_input("Username", placeholder="Username", label_visibility="collapsed")
+    password = st.text_input("Password", type="password", placeholder="Password", label_visibility="collapsed")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="auth-btn">', unsafe_allow_html=True)
+    if st.button("LOG IN"):
+        if login(email, password):
+            st.session_state.login = True
+            st.rerun()
+        else:
+            st.error("Username atau Password Salah")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div style="height:70px;"></div>', unsafe_allow_html=True)
+
+    c1, c2, c3 = st.columns([2.2, 1, 1.2])
+    with c1:
+        st.markdown('<div class="auth-text">Have not account?</div>', unsafe_allow_html=True)
+    with c2:
+        st.markdown('<div class="small-btn">', unsafe_allow_html=True)
         if st.button("Create Account"):
-            st.session_state["page"] = "Sign Up"
+            st.session_state.page = "Sign Up"
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    elif menu == "Sign Up":
-        st.markdown('<div class="signup-title">Sign Up</div>', unsafe_allow_html=True)
-        st.markdown('<div class="signup-subtitle">Create an account</div>', unsafe_allow_html=True)
+    st.markdown("""
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-        new_email = st.text_input("Email")
-        new_password = st.text_input("Password", type="password")
-        confirm_password = st.text_input("Confirm Password", type="password")
 
-        if st.button("Sign Up"):
-            if new_email == "" or new_password == "":
-                st.error("Semua data harus diisi")
-            elif new_password != confirm_password:
-                st.error("Password tidak sama")
-            else:
-                if signup(new_email, new_password):
-                    st.success("Akun berhasil dibuat. Silakan Login.")
-                else:
-                    st.error("Email sudah digunakan.")
+# =========================
+# SIGNUP PAGE
+# =========================
+elif not st.session_state.login and st.session_state.page == "Sign Up":
+    bg = f"data:image/jpeg;base64,{signup_bg}" if signup_bg else ""
 
-        st.markdown("#### Already have an account?")
+    st.markdown(f"""
+    <div class="auth-wrap">
+        <div class="auth-bg" style="background-image:url('{bg}');"></div>
+        <div class="auth-content">
+            <div class="signup-space"></div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="signup-input">', unsafe_allow_html=True)
+    new_email = st.text_input("Email", placeholder="Email", label_visibility="collapsed")
+    new_password = st.text_input("Password", type="password", placeholder="Password", label_visibility="collapsed")
+    confirm = st.text_input("Confirm Password", type="password", placeholder="Confirm Password", label_visibility="collapsed")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div style="height:25px;"></div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="signup-btn">', unsafe_allow_html=True)
+    if st.button("Sign Up"):
+        if new_email == "" or new_password == "":
+            st.error("Semua data harus diisi")
+        elif new_password != confirm:
+            st.error("Password tidak sama")
+        elif signup(new_email, new_password):
+            st.success("Akun berhasil dibuat. Silakan login.")
+        else:
+            st.error("Email sudah digunakan.")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div style="height:45px;"></div>', unsafe_allow_html=True)
+
+    c1, c2, c3 = st.columns([2.2, 0.8, 1.3])
+    with c1:
+        st.markdown('<div class="auth-text">Already have an account?</div>', unsafe_allow_html=True)
+    with c2:
+        st.markdown('<div class="small-btn">', unsafe_allow_html=True)
         if st.button("Log In"):
+            st.session_state.page = "Login"
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
+    st.markdown("""
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+# =========================
+# DASHBOARD PAGE
+# =========================
 else:
+    st.markdown('<div class="dashboard-page">', unsafe_allow_html=True)
     st.markdown(
         '<div class="dashboard-header">OPTIMALISASI DISTRIBUSI LOGISTIK HORTIKULTURA</div>',
         unsafe_allow_html=True
     )
+    st.markdown('<div class="dashboard-body">', unsafe_allow_html=True)
 
-    if st.sidebar.button("Logout"):
-        st.session_state["login"] = False
-        st.rerun()
-
-    col1, col2 = st.columns([1, 2.15])
+    col1, col2 = st.columns([1, 2.25])
 
     with col1:
         st.markdown('<div class="panel-box">', unsafe_allow_html=True)
-        st.markdown("### Panel Input Scanner")
+        st.markdown('<div class="panel-title">Panel Input Scanner</div>', unsafe_allow_html=True)
 
-        komoditas = st.selectbox("", ["Wortel", "Cabai", "Brokoli"])
+        komoditas = st.selectbox("", ["Wortel", "Cabai", "Brokoli"], label_visibility="collapsed")
 
         uploaded_file = st.file_uploader(
-            "Pilih Foto dari Galeri",
+            "Pilih Foto",
             type=["jpg", "jpeg", "png"],
             label_visibility="collapsed"
         )
@@ -333,11 +526,23 @@ else:
         else:
             st.markdown('<div class="preview-box">[ Preview ]</div>', unsafe_allow_html=True)
 
+        st.markdown('<div class="blue-btn">', unsafe_allow_html=True)
         st.button("Buka Kamera")
-        st.button("Pilih Foto dari Galeri")
-        st.button("Tandai Area Sayur (ROI)")
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        if st.button("Jalankan Analisis"):
+        st.markdown('<div class="orange-btn">', unsafe_allow_html=True)
+        st.button("Pilih Foto dari Galeri")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown('<div class="purple-btn">', unsafe_allow_html=True)
+        st.button("Tandai Area Sayur (ROI)")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown('<div class="green-btn">', unsafe_allow_html=True)
+        analisis = st.button("Jalankan Analisis")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        if analisis:
             if uploaded_file is None:
                 st.error("Pilih foto dulu.")
             else:
@@ -353,7 +558,7 @@ else:
                     suhu = rekomendasi_suhu(nama)
                     sisa_hari = f"{sisa} Hari"
 
-                    st.session_state["hasil"] = {
+                    st.session_state.hasil = {
                         "komoditas": nama,
                         "kondisi": kondisi,
                         "sisa": sisa_hari,
@@ -379,24 +584,23 @@ else:
 
     with col2:
         st.markdown('<div class="panel-box">', unsafe_allow_html=True)
-        st.markdown("### Dashboard")
+        st.markdown('<div class="panel-title">Dashboard</div>', unsafe_allow_html=True)
 
-        hasil = st.session_state["hasil"]
-
+        h = st.session_state.hasil
         st.markdown(f"""
         <div class="result-box">
-        Hasil Pindai Sistem
-        ====================
-        Komoditas : {hasil["komoditas"]}
-        Kondisi   : {hasil["kondisi"]}
-        Sisa      : {hasil["sisa"]}
-        Suhu Simpan : {hasil["suhu"]}
+Hasil Pindai Sistem
+====================
+Komoditas : {h["komoditas"]}
+Kondisi   : {h["kondisi"]}
+Sisa      : {h["sisa"]}
+Suhu Simpan : {h["suhu"]}
         </div>
         """, unsafe_allow_html=True)
 
         conn = sqlite3.connect(DB_ANALISIS)
         data = conn.execute(
-            "SELECT id, komoditas, kondisi, sisa_segar, suhu_simpan FROM riwayat_pindai ORDER BY id ASC"
+            "SELECT id, komoditas, kondisi, sisa_segar, suhu_simpan FROM riwayat_pindai"
         ).fetchall()
         conn.close()
 
@@ -414,3 +618,5 @@ else:
         )
 
         st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('</div></div>', unsafe_allow_html=True)
