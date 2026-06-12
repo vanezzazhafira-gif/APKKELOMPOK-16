@@ -188,6 +188,10 @@ if "hasil" not in st.session_state:
         "suhu": "-"
     }
 
+# Riwayat hanya untuk sesi ini supaya setelah selesai/refresh tidak muncul lagi data lama.
+if "riwayat_session" not in st.session_state:
+    st.session_state.riwayat_session = []
+
 
 # =========================
 # GLOBAL CSS
@@ -273,9 +277,8 @@ header[data-testid="stHeader"] {
     background: #eeeeee;
     width: 1120px;
     min-height: 660px;
-    margin: 18px auto;
+    margin: 10px auto;
     border-radius: 0px;
-    overflow: hidden;
     color: black;
 }
 
@@ -289,39 +292,41 @@ header[data-testid="stHeader"] {
 }
 
 .dashboard-body {
-    padding: 10px 15px;
+    padding: 8px 10px;
 }
 
 .panel-box {
     background: white;
     border: 1px solid #999;
-    padding: 10px;
+    padding: 8px;
     min-height: 575px;
 }
 
 .panel-title {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 800;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .preview-box {
     background: #dddddd;
-    height: 337px;
+    height: 392px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: black;
     margin-bottom: 4px;
+    border: 1px solid #e5e5e5;
 }
 
 .result-box {
     background: #f7f7f7;
-    padding: 18px 0px 12px 275px;
+    padding: 10px 0px 10px 390px;
     font-family: monospace;
-    font-size: 16px;
+    font-size: 14px;
     white-space: pre-line;
     border-bottom: 1px solid #999;
+    min-height: 115px;
 }
 
 .blue-btn div.stButton > button {
@@ -357,6 +362,22 @@ header[data-testid="stHeader"] {
     font-weight: 800;
 }
 
+.clear-btn div.stButton > button {
+    background: #555555;
+    color: white;
+    border-radius: 0px;
+    width: 100%;
+    height: 32px;
+}
+
+div[data-testid="stSelectbox"] {
+    margin-bottom: -8px;
+}
+
+div[data-testid="stFileUploader"] {
+    display: none;
+}
+
 [data-testid="stDataFrame"] {
     background: white;
 }
@@ -370,7 +391,6 @@ header[data-testid="stHeader"] {
 if not st.session_state.login and st.session_state.page == "Login":
     bg = f"data:image/jpeg;base64,{login_bg}" if login_bg else ""
 
-    # Background dipasang langsung di block-container agar input berada DI ATAS gambar, bukan di bawah gambar.
     st.markdown(f"""
     <style>
     .block-container {{
@@ -389,7 +409,6 @@ if not st.session_state.login and st.session_state.page == "Login":
     </style>
     """, unsafe_allow_html=True)
 
-    # Jarak dari atas sampai posisi Username seperti aplikasi PyQt
     st.markdown('<div style="height:360px;"></div>', unsafe_allow_html=True)
 
     st.markdown('<div class="auth-input">', unsafe_allow_html=True)
@@ -445,7 +464,6 @@ elif not st.session_state.login and st.session_state.page == "Sign Up":
     </style>
     """, unsafe_allow_html=True)
 
-    # Posisi input sesuai desain Sign Up PyQt
     st.markdown('<div style="height:335px;"></div>', unsafe_allow_html=True)
 
     st.markdown('<div class="signup-input">', unsafe_allow_html=True)
@@ -489,7 +507,7 @@ else:
     <style>
     .block-container {
         max-width: 1120px;
-        margin: 18px auto;
+        margin: 0px auto;
         padding-left: 0px;
         padding-right: 0px;
         background: transparent;
@@ -504,7 +522,7 @@ else:
     )
     st.markdown('<div class="dashboard-body">', unsafe_allow_html=True)
 
-    col1, col2 = st.columns([1, 2.25])
+    col1, col2 = st.columns([1, 1.55])
 
     with col1:
         st.markdown('<div class="panel-box">', unsafe_allow_html=True)
@@ -512,8 +530,9 @@ else:
 
         komoditas = st.selectbox("", ["Wortel", "Cabai", "Brokoli"], label_visibility="collapsed")
 
+        # Uploader disembunyikan dengan CSS, tombol oranye tetap menjadi trigger lewat uploader.
         uploaded_file = st.file_uploader(
-            "Pilih Foto",
+            "Pilih Foto dari Galeri",
             type=["jpg", "jpeg", "png"],
             label_visibility="collapsed"
         )
@@ -540,6 +559,20 @@ else:
         analisis = st.button("Jalankan Analisis")
         st.markdown('</div>', unsafe_allow_html=True)
 
+        st.markdown('<div class="clear-btn">', unsafe_allow_html=True)
+        selesai = st.button("Selesai / Bersihkan Hasil")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        if selesai:
+            st.session_state.hasil = {
+                "komoditas": "-",
+                "kondisi": "-",
+                "sisa": "-",
+                "suhu": "-"
+            }
+            st.session_state.riwayat_session = []
+            st.rerun()
+
         if analisis:
             if uploaded_file is None:
                 st.error("Pilih foto dulu.")
@@ -563,6 +596,7 @@ else:
                         "suhu": suhu
                     }
 
+                    # Tetap simpan ke database, tetapi yang ditampilkan hanya hasil sesi ini.
                     conn = sqlite3.connect(DB_ANALISIS)
                     cur = conn.cursor()
                     cur.execute(
@@ -575,6 +609,11 @@ else:
                     )
                     conn.commit()
                     conn.close()
+
+                    new_id = len(st.session_state.riwayat_session) + 1
+                    st.session_state.riwayat_session.append(
+                        (new_id, nama, kondisi, sisa_hari, suhu)
+                    )
 
                     st.success("Analisis berhasil")
 
@@ -596,14 +635,8 @@ Suhu Simpan : {h["suhu"]}
         </div>
         """, unsafe_allow_html=True)
 
-        conn = sqlite3.connect(DB_ANALISIS)
-        data = conn.execute(
-            "SELECT id, komoditas, kondisi, sisa_segar, suhu_simpan FROM riwayat_pindai"
-        ).fetchall()
-        conn.close()
-
         st.dataframe(
-            data,
+            st.session_state.riwayat_session,
             use_container_width=True,
             hide_index=True,
             column_config={
