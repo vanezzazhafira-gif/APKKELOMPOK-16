@@ -6,7 +6,6 @@ from PIL import Image
 import tempfile
 import os
 import base64
-from io import BytesIO
 
 # Konfigurasi dasar page Streamlit wide
 st.set_page_config(page_title="Optimalisasi Logistik Pertanian", layout="wide")
@@ -14,20 +13,15 @@ st.set_page_config(page_title="Optimalisasi Logistik Pertanian", layout="wide")
 DB_LOGIN = "manajemen_akses.db"
 DB_ANALISIS = "logistik_hortikultura.db"
 
-# Fungsi membaca file logo secara aman menggunakan PIL + Base64
+# FUNGSI BASE64 TERBARU: Membaca murni byte data dari logoo.jpg tanpa mengubah format asli
 def get_base64_logo(image_path):
     if os.path.exists(image_path):
-        try:
-            img = Image.open(image_path)
-            buffered = BytesIO()
-            img.save(buffered, format="PNG")
-            img_str = base64.b64encode(buffered.getvalue()).decode()
-            return f"data:image/png;base64,{img_str}"
-        except Exception as e:
-            return "https://via.placeholder.com/150"
-    return "https://via.placeholder.com/150"
+        with open(image_path, "rb") as img_file:
+            encoded_string = base64.b64encode(img_file.read()).decode()
+        return f"data:image/jpeg;base64,{encoded_string}"
+    return ""
 
-# Mengonversi file logoo.jpg
+# Mengonversi file logoo.jpg secara presisi
 LOGO_BASE64 = get_base64_logo("logoo.jpg")
 
 # =========================================================
@@ -150,7 +144,7 @@ if "hasil" not in st.session_state:
 if "riwayat_session" not in st.session_state: 
     st.session_state.riwayat_session = []
 
-# Sembunyikan elemen header default Streamlit agar terlihat clean
+# Sembunyikan header default Streamlit
 st.markdown("<style>header[data-testid='stHeader'] {display:none;}</style>", unsafe_allow_html=True)
 
 # =========================================================
@@ -346,7 +340,7 @@ else:
             background-color: #fcfcfc !important;
             padding: 20px !important;
             border-radius: 4px !important;
-            margin-bottom: 15px !important;
+            margin-bottom: 20px !important;
         }
         
         .group-box-title {
@@ -390,7 +384,7 @@ else:
             width: 100%;
         }
 
-        /* Tombol Flat Sesuai Tampilan UI Qt Designer */
+        /* Tombol UI Qt Designer flat styling */
         .stButton>button {
             border-radius: 0px !important;
             font-family: sans-serif !important;
@@ -410,7 +404,7 @@ else:
     <div class="qt-main-header">OPTIMALISASI DISTRIBUSI LOGISTIK HORTIKULTURA</div>
     """, unsafe_allow_html=True)
 
-    # Inisialisasi Kolom Sejajar (Kiri dan Kanan)
+    # Inisialisasi Grid Layout Utama Kiri & Kanan Berdampingan Presisi
     col_kiri, col_kanan = st.columns([1, 1.3], gap="large")
 
     # PANEL KIRI: PANEL INPUT SCANNER
@@ -431,7 +425,7 @@ else:
         else:
             st.markdown('<div class="qt-preview-box">[ Kamera Belum Aktif / Gambar Kosong ]</div>', unsafe_allow_html=True)
 
-        # Baris Tombol Pertama
+        # Baris Tombol Atas di dalam panel input scanner
         cb1, cb2 = st.columns(2)
         with cb1:
             st.markdown('<div class="col-blue-btn">', unsafe_allow_html=True)
@@ -444,7 +438,7 @@ else:
 
         st.write("")
         
-        # Baris Tombol Kedua
+        # Baris Tombol Bawah di dalam panel input scanner
         cb3, cb4 = st.columns(2)
         with cb3:
             st.markdown('<div class="col-purple-btn">', unsafe_allow_html=True)
@@ -457,7 +451,7 @@ else:
             
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # PANEL KANAN: PANEL DASHBOARD UTAMA
+    # PANEL KANAN: PANEL DASHBOARD UTAMA (SELALU SEJAJAR KANAN)
     with col_kanan:
         st.markdown('<div class="group-box-panel"><div class="group-box-title">Dashboard</div>', unsafe_allow_html=True)
         
@@ -501,7 +495,7 @@ else:
                     new_id = len(st.session_state.riwayat_session) + 1
                     st.session_state.riwayat_session.append((new_id, nama_veg, kond_veg, string_sisa, suhu_rekom))
 
-        # Output Terminal Hasil Pindai (Selalu Terkunci di Atas Tabel)
+        # Output Terminal Monitor Box Hasil Scan
         res = st.session_state.hasil
         text_output = f"""Hasil Pindai Sistem Monitor
 ======================================
@@ -514,7 +508,7 @@ Rekomendasi Suhu   : {res["suhu"]}"""
         
         st.write("### Tabel Log Aktivitas Logistik")
         
-        # Tabel Riwayat aktivitas scan terikat rapi ke dashboard kanan
+        # Tabel Riwayat aktivitas di dalam kotak dashboard kanan bawah
         st.dataframe(
             st.session_state.riwayat_session,
             use_container_width=True,
