@@ -90,7 +90,7 @@ def cek_kondisi_citra(cv_img, jenis):
     return jenis, status, sisa
 
 # ==============================================================================
-# 2. SEGMEN LAYOUT CSS & SOLUSI FIX LABEL TERSANDERA DARK MODE
+# 2. SEGMEN LAYOUT CSS (PERBAIKAN WARNA TEKS LABEL INPUT)
 # ==============================================================================
 st.set_page_config(page_title="Optimalisasi Logistik Pertanian", layout="wide")
 
@@ -107,11 +107,17 @@ st.markdown("""
     }
     header { visibility: hidden; }
     
-    /* FIX: Memunculkan teks Label (Username, Email, Password) menjadi Hitam Tegas */
-    .stWidgetLabel p {
+    /* FIX TOTAL: Memaksa tulisan Label di atas kolom input menjadi hitam pekat dan tebal */
+    [data-testid="stWidgetLabel"] p {
         color: #000000 !important;
-        font-weight: 600 !important;
+        font-weight: bold !important;
         font-size: 16px !important;
+    }
+    
+    /* Mengantisipasi elemen teks label pada versi Streamlit lama/baru */
+    .stWidgetLabel, .stWidgetLabel p, label p {
+        color: #000000 !important;
+        font-weight: bold !important;
     }
     
     /* Ornamen Lingkaran Hijau Kanan Atas */
@@ -154,7 +160,7 @@ st.markdown("""
         width: 100%;
     }
     
-    /* Desain Kolom Input Agar Nyaman Dilihat */
+    /* Menyesuaikan teks di dalam kolom input agar kontras */
     .stTextInput>div>div>input {
         background-color: #ffffff !important;
         color: #000000 !important;
