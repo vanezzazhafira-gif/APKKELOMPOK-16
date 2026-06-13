@@ -38,7 +38,7 @@ def init_databases():
         )
     """)
     
-    # FIX: Setiap kali aplikasi dijalankan pertama kali, bersihkan hasil analisis lama
+    # Setiap kali aplikasi dijalankan pertama kali, bersihkan riwayat lama
     if "db_terbersihkan" not in st.session_state:
         cursor.execute("DELETE FROM riwayat_pindai")
         st.session_state.db_terbersihkan = True
@@ -49,9 +49,9 @@ def init_databases():
 init_databases()
 
 def rekomendasi_suhu(jenis):
-    if jenis == "Wortel": return "0 - 4 °C"
-    elif jenis == "Cabai": return "7 - 10 °C"
-    elif jenis == "Brokoli": return "0 - 2 °C"
+    if jenis == "Wortel": return "0 - 4 CC"
+    elif jenis == "Cabai": return "7 - 10 CC"
+    elif jenis == "Brokoli": return "0 - 2 CC"
     return "-"
 
 def cek_kondisi_citra(cv_img, jenis):
@@ -106,6 +106,8 @@ if "halaman" not in st.session_state:
     st.session_state.halaman = "login"
 if "foto_input" not in st.session_state:
     st.session_state.foto_input = None
+if "mode_input" not in st.session_state:
+    st.session_state.mode_input = None
 
 st.markdown("""
 <style>
@@ -230,7 +232,7 @@ if st.session_state.halaman == "login":
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. HALAMAN INTERFACE: SIGN UP
+# 4. HALAMAN INTERFACE: SIGN UP (DENGAN PEMBERITAHUAN SELESAI)
 # ==============================================================================
 elif st.session_state.halaman == "signup":
     st.markdown('<div class="bg-circle-top-right"></div>', unsafe_allow_html=True)
@@ -273,7 +275,9 @@ elif st.session_state.halaman == "signup":
                     cursor.execute("INSERT INTO data_pengguna(email, password) VALUES (?,?)", (reg_email, reg_pass1))
                     conn.commit()
                     conn.close()
-                    st.success("Registrasi Sukses! Silakan Login.")
+                    
+                    # Menampilkan pesan pemberitahuan akun berhasil dibuat sebelum pindah halaman
+                    st.success("Akun berhasil dibuat!")
                     st.session_state.halaman = "login"
                     st.rerun()
                 except sqlite3.IntegrityError:
@@ -305,6 +309,7 @@ elif st.session_state.halaman == "dashboard":
     with col_logout:
         if st.button("Log Out", use_container_width=True):
             st.session_state.foto_input = None
+            st.session_state.mode_input = None
             st.session_state.halaman = "login"
             st.rerun()
             
@@ -320,21 +325,31 @@ elif st.session_state.halaman == "dashboard":
             else:
                 st.image(st.session_state.foto_input, use_container_width=True)
                 
-        # Input berkas gambar manual
-        file_terunggah = st.file_uploader("Unggah berkas foto atau gambar sayur:", type=["jpg", "png", "jpeg"])
-        if file_terunggah:
-            st.session_state.foto_input = Image.open(file_terunggah)
-            
-        # FIX KAMERA: Menggunakan widget kamera asli Streamlit agar bisa menangkap gambar secara real-time
-        ambil_kamera = st.camera_input("📸 Ambil Foto langsung dari Kamera:")
-        if ambil_kamera:
-            st.session_state.foto_input = Image.open(ambil_kamera)
+        # Tombol Pemicu Menu Utama
+        col_m1, col_m2 = st.columns(2)
+        with col_m1:
+            if st.button("Pilih Foto dari Galeri", use_container_width=True):
+                st.session_state.mode_input = "galeri"
+        with col_m2:
+            if st.button("Buka Kamera", use_container_width=True):
+                st.session_state.mode_input = "kamera"
+
+        # Tampilan Unggah Berkas (Hanya muncul jika tombol Galeri ditekan)
+        if st.session_state.mode_input == "galeri":
+            file_terunggah = st.file_uploader("Unggah berkas foto atau gambar sayur:", type=["jpg", "png", "jpeg"])
+            if file_terunggah:
+                st.session_state.foto_input = Image.open(file_terunggah)
+                
+        # Tampilan Kamera Aktif (Hanya muncul jika tombol Kamera ditekan)
+        if st.session_state.mode_input == "kamera":
+            ambil_kamera = st.camera_input("Ambil Foto langsung dari Kamera:")
+            if ambil_kamera:
+                st.session_state.foto_input = Image.open(ambil_kamera)
         
-        st.button("📁 Pilih Foto dari Galeri", use_container_width=True)
-        st.button("🎯 Tandai Area Sayur (ROI)", use_container_width=True)
+        st.button("Tandai Area Sayur (ROI)", use_container_width=True)
         
         st.write("")
-        btn_proses_analisis = st.button("🚀 Jalankan Analisis", use_container_width=True, type="primary")
+        btn_proses_analisis = st.button("Jalankan Analisis", use_container_width=True, type="primary")
         
         if btn_proses_analisis:
             if st.session_state.foto_input is None:
