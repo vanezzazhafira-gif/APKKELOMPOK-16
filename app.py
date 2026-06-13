@@ -87,66 +87,115 @@ def cek_kondisi_citra(cv_img, jenis):
 
     return jenis, status, sisa
 
+# ==============================================================================
+# CONFIG & KUSTOMISASI CSS (Poin 1)
+# ==============================================================================
 st.set_page_config(page_title="Logistik Hortikultura", page_icon="🌱", layout="wide")
+
+st.markdown("""
+<style>
+.main-header{
+    background:#1b5e20;
+    padding:15px;
+    border-radius:8px;
+    text-align:center;
+    color:white;
+    font-size:28px;
+    font-weight:bold;
+    margin-bottom:20px;
+}
+
+.panel{
+    background:white;
+    padding:15px;
+    border-radius:10px;
+    box-shadow:0px 2px 10px rgba(0,0,0,0.2);
+}
+
+.result-box{
+    background:#f9f9f9;
+    padding:15px;
+    border-radius:8px;
+    border-left:5px solid #1b5e20;
+    color: black !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
 if "terautentikasi" not in st.session_state:
     st.session_state.terautentikasi = False
 if "user_aktif" not in st.session_state:
     st.session_state.user_aktif = ""
 
+# ==============================================================================
+# HALAMAN LOGIN (Poin 2)
+# ==============================================================================
 if not st.session_state.terautentikasi:
-    st.title("🌱 Aplikasi Logistik Hortikultura")
+    st.markdown(
+    """
+    <div class='main-header'>
+    🌱 APLIKASI LOGISTIK HORTIKULTURA
+    </div>
+    """,
+    unsafe_allow_html=True
+    )
     
-    # Sesuaikan dengan nama file logomu di GitHub (logoo.PNG)
-    if os.path.exists("logoo.PNG"):
-        st.image("logoo.PNG", width=110)
-        
-    pilihan_tab = st.sidebar.radio("Navigasi Akses:", ["Masuk Akun", "Daftar Akun Baru"])
+    c1, c2, c3 = st.columns([1, 2, 1])
     
-    if pilihan_tab == "Masuk Akun":
-        st.subheader("Login Form")
-        username_input = st.text_input("Username / Email")
-        password_input = st.text_input("Password", type="password")
-        
-        if st.button("LOG IN", type="primary"):
-            conn = sqlite3.connect(DB_LOGIN_PATH)
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM data_pengguna WHERE email=? AND password=?", (username_input, password_input))
-            user = cursor.fetchone()
-            conn.close()
+    with c2:
+        if os.path.exists("logoo.PNG"):
+            st.image("logoo.PNG", width=180)
             
-            if user:
-                st.session_state.terautentikasi = True
-                st.session_state.user_aktif = username_input
-                st.success("Selamat Datang! Login Berhasil.")
-                st.rerun()
-            else:
-                st.error("Maaf, Username atau Password salah!")
-                
-    elif pilihan_tab == "Daftar Akun Baru":
-        st.subheader("Sign Up Form")
-        new_email = st.text_input("Masukkan Email")
-        new_pass = st.text_input("Masukkan Password", type="password")
-        confirm_pass = st.text_input("Konfirmasi Password", type="password")
+        pilihan_tab = st.radio("Navigasi Akses:", ["Masuk Akun", "Daftar Akun Baru"], horizontal=True)
+        st.write("---")
         
-        if st.button("Register Akun"):
-            if new_email == "" or new_pass == "":
-                st.warning("Form registrasi tidak boleh kosong!")
-            elif new_pass != confirm_pass:
-                st.error("Konfirmasi password tidak cocok!")
-            else:
-                try:
-                    conn = sqlite3.connect(DB_LOGIN_PATH)
-                    cursor = conn.cursor()
-                    cursor.execute("INSERT INTO data_pengguna (email, password) VALUES (?, ?)", (new_email, new_pass))
-                    conn.commit()
-                    conn.close()
-                    st.success("Akun sukses dibuat! Silakan pindah ke menu 'Masuk Akun'.")
-                except sqlite3.IntegrityError:
-                    st.error("Email tersebut sudah terdaftar sebelumnya!")
+        if pilihan_tab == "Masuk Akun":
+            st.subheader("Login Form")
+            username_input = st.text_input("Username / Email")
+            password_input = st.text_input("Password", type="password")
+            
+            if st.button("LOG IN", type="primary", use_container_width=True):
+                conn = sqlite3.connect(DB_LOGIN_PATH)
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM data_pengguna WHERE email=? AND password=?", (username_input, password_input))
+                user = cursor.fetchone()
+                conn.close()
+                
+                if user:
+                    st.session_state.terautentikasi = True
+                    st.session_state.user_aktif = username_input
+                    st.success("Selamat Datang! Login Berhasil.")
+                    st.rerun()
+                else:
+                    st.error("Maaf, Username atau Password salah!")
+                    
+        elif pilihan_tab == "Daftar Akun Baru":
+            st.subheader("Sign Up Form")
+            new_email = st.text_input("Masukkan Email")
+            new_pass = st.text_input("Masukkan Password", type="password")
+            confirm_pass = st.text_input("Konfirmasi Password", type="password")
+            
+            if st.button("Register Akun", use_container_width=True):
+                if new_email == "" or new_pass == "":
+                    st.warning("Form registrasi tidak boleh kosong!")
+                elif new_pass != confirm_pass:
+                    st.error("Konfirmasi password tidak cocok!")
+                else:
+                    try:
+                        conn = sqlite3.connect(DB_LOGIN_PATH)
+                        cursor = conn.cursor()
+                        cursor.execute("INSERT INTO data_pengguna (email, password) VALUES (?, ?)", (new_email, new_pass))
+                        conn.commit()
+                        conn.close()
+                        st.success("Akun sukses dibuat! Silakan pindah ke menu 'Masuk Akun'.")
+                    except sqlite3.IntegrityError:
+                        st.error("Email tersebut sudah terdaftar sebelumnya!")
 
+# ==============================================================================
+# HALAMAN DASHBOARD LOGISTIK UTAMA
+# ==============================================================================
 else:
-    st.markdown("<div style='background-color:#1b5e20;padding:12px;border-radius:4px'><h2 style='color:white;text-align:center;margin:0;'>OPTIMALISASI DISTRIBUSI LOGISTIK HORTIKULTURA</h2></div>", unsafe_allow_html=True)
+    st.markdown("<div class='main-header'>OPTIMALISASI DISTRIBUSI LOGISTIK HORTIKULTURA</div>", unsafe_allow_html=True)
     
     col_user, col_logout = st.columns([8, 2])
     col_user.write(f"Pengguna aktif: **{st.session_state.user_aktif}**")
@@ -156,10 +205,15 @@ else:
         st.rerun()
 
     st.write("---")
-    kolom_kiri, kolom_kanan = st.columns([1, 1])
     
+    # Rasio kolom dibuat mirip Tkinter (Poin 3)
+    kolom_kiri, kolom_kanan = st.columns([1, 1.3])
+    
+    # --- PANEL KIRI: SCANNER (Poin 4) ---
     with kolom_kiri:
+        st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("📸 Panel Input Scanner")
+        
         pilih_komoditas = st.selectbox("Komoditas Sayuran:", ["Wortel", "Cabai", "Brokoli"])
         opsi_kamera = st.radio("Sumber Input Citra:", ["Gunakan Kamera HP/Laptop (Live)", "Unggah File Foto dari Galeri"])
         
@@ -171,6 +225,10 @@ else:
             
         if file_media is not None:
             img_pil = Image.open(file_media)
+            
+            # Preview Gambar ala Tkinter (Poin 5)
+            st.image(img_pil, caption="Preview Gambar", use_container_width=True)
+            
             img_np = np.array(img_pil)
             if len(img_np.shape) == 3 and img_np.shape[2] == 4:
                 img_np = cv2.cvtColor(img_np, cv2.COLOR_RGBA2RGB)
@@ -193,28 +251,37 @@ else:
                     conn.commit()
                     conn.close()
                     st.success("Data pemindaian berhasil diproses dan direkam!")
+                    st.rerun()
+                    
+        st.markdown("</div>", unsafe_allow_html=True)
 
+    # --- PANEL KANAN: DASHBOARD (Poin 6) ---
     with kolom_kanan:
-        st.subheader("📊 Dashboard Utama & Riwayat")
+        st.subheader("📊 Dashboard")
+        
         conn = sqlite3.connect(DB_ANALISIS_PATH)
         cursor = conn.cursor()
         cursor.execute("SELECT id, komoditas, kondisi, sisa_segar, suhu_simpan FROM riwayat_pindai ORDER BY id DESC")
         data_db = cursor.fetchall()
         conn.close()
         
+        # Hasil Scan bergaya desktop (Poin 7)
         if data_db:
             terbaru = data_db[0]
-            st.info(f"""
-            **Hasil Pindai Sistem Paling Baru:**
-            * Nama Komoditas : **{terbaru[1]}**
-            * Kondisi Fisik : **{terbaru[2]}**
-            * Estimasi Sisa Segar : **{terbaru[3]}**
-            * Batas Suhu Simpan : **{terbaru[4]}**
-            """)
+            st.markdown(f"""
+            <div class='result-box'>
+            <b>Hasil Pindai Sistem</b>
+            <hr style='margin-top:5px; margin-bottom:10px;'>
+            Komoditas : <b>{terbaru[1]}</b><br>
+            Kondisi : <b>{terbaru[2]}</b><br>
+            Sisa Segar : <b>{terbaru[3]}</b><br>
+            Suhu Simpan : <b>{terbaru[4]}</b>
+            </div>
+            """, unsafe_allow_html=True)
         else:
             st.warning("Belum ada riwayat data di database.")
             
-        st.write("**Tabel Logistik Riwayat Lengkap:**")
+        st.write("<br><b>Tabel Logistik Riwayat Lengkap:</b>", unsafe_allow_html=True)
         if data_db:
             import pandas as pd
             df_tabel = pd.DataFrame(data_db, columns=["ID Pindai", "Nama", "Kondisi Mutu", "Sisa Hari", "Suhu Rekomendasi"])
