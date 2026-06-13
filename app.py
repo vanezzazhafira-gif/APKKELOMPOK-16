@@ -88,40 +88,39 @@ def cek_kondisi_citra(cv_img, jenis):
     return jenis, status, sisa
 
 # ==============================================================================
-# ENGINE CONFIG & PERBAIKAN CSS TOTAL (AGAR FORM MASUK KE DALAM CARD)
+# CSS CONFIG & LAYOUT DESKTOP
 # ==============================================================================
 st.set_page_config(page_title="Optimalisasi Logistik Pertanian", page_icon="🌱", layout="wide")
 
 st.markdown("""
 <style>
-/* Sembunyikan elemen bawaan web streamlit */
+/* Sembunyikan header default streamlit */
 header, footer, [data-testid="stHeader"] { visibility: hidden !important; height: 0px !important; }
 
-/* Background dasar abu-abu terang menyerupai sistem desktop window */
+/* Background dasar aplikasi web */
 .stApp { background-color: #f0f0f0 !important; }
 
-/* Trik Mewarnai Kontainer Login Menjadi Kotak Putih Total & Presisi */
+/* Membungkus form login ke dalam Card putih di tengah */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stCustomComponentToWebpage"]) {
     background-color: white !important;
     border: 1px solid #bcbcbc !important;
     border-radius: 8px !important;
-    padding: 30px !important;
-    box-shadow: 0px 4px 15px rgba(0,0,0,0.15) !important;
-    max-width: 440px !important;
+    padding: 35px !important;
+    box-shadow: 0px 4px 15px rgba(0,0,0,0.12) !important;
+    max-width: 450px !important;
     margin: auto !important;
 }
 
-/* Memperbaiki style teks judul aplikasi desktop */
 .app-title-tk {
-    font-size: 15px !important;
+    font-size: 14px !important;
     font-weight: bold !important;
     color: black !important;
     text-align: center !important;
-    margin-top: 10px !important;
-    margin-bottom: 20px !important;
+    margin-top: 5px !important;
+    margin-bottom: 25px !important;
 }
 
-/* --- DASHBOARD LOGISTIK UTAMA STYLE --- */
+/* --- PANEL UTAMA DASHBOARD --- */
 .app-header-green {
     background-color: #246329 !important;
     border: 1px solid #18441c;
@@ -160,13 +159,12 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stCustomCom
     margin-bottom: 20px;
 }
 
-/* --- STYLING BERWARNA TOMBOL AKSES ASLI --- */
+/* --- STYLING WARNA TOMBOL --- */
 .btn-blue button { background-color: #1e81d2 !important; color: white !important; border-radius: 0px !important; }
 .btn-orange button { background-color: #f19f12 !important; color: white !important; border-radius: 0px !important; }
 .btn-purple button { background-color: #7a1fa2 !important; color: white !important; border-radius: 0px !important; }
 .btn-green button { background-color: #2c7d32 !important; color: white !important; border-radius: 0px !important; font-weight: bold !important; }
 
-/* Form Field Styling */
 div[data-baseweb="input"] { background-color: white !important; border: 1px solid #a0a0a0 !important; color: black !important; }
 div[data-baseweb="select"] { background-color: white !important; color: black !important; }
 div[data-testid="stMarkdownContainer"] p { color: black !important; }
@@ -179,32 +177,30 @@ if "user_aktif" not in st.session_state:
     st.session_state.user_aktif = ""
 if "foto_terpilih" not in st.session_state:
     st.session_state.foto_terpilih = None
+if "halaman_aktif" not in st.session_state:
+    st.session_state.halaman_aktif = "login"  # Default ke halaman login
 
 # ==============================================================================
-# PERBAIKAN FORM LOGIN (MENYATU DIDALAM SATU KOTAK PUTIH DI TENGAH)
+# INTERFASE LOGIN & SIGNUP (NAVIGASI DIPINDAH KE BAGIAN BAWAH FORM)
 # ==============================================================================
 if not st.session_state.terautentikasi:
     st.write("<br><br>", unsafe_allow_html=True)
     
-    # Memakai pembagian kolom luar agar kontainer putih otomatis terkunci di tengah layar
     col_kiri, col_tengah, col_kanan = st.columns([1, 1.1, 1])
     
     with col_tengah:
-        # Elemen pemicu CSS pendeteksi box card putih
+        # Pemicu CSS container
         st.write("") 
         
-        # Opsi Tab Pilihan Atas
-        menu_akses = st.radio("", ["Masuk Sesi Log In", "Buat Akun Baru"], horizontal=True, label_visibility="collapsed")
-        st.write("---")
-        
-        # Membaca gambar logo kelompok di dalam kotak putih
+        # 1. Tampilkan Logo Kelompok Paling Atas di Dalam Kotak
         if os.path.exists("logoo.PNG"):
             c_img1, c_img2, c_img3 = st.columns([1, 1.2, 1])
             with c_img2:
                 st.image("logoo.PNG", width=100)
                 
-        if menu_akses == "Masuk Sesi Log In":
-            st.markdown("<h1 style='text-align: center; color: black; font-size: 32px; margin: 0;'>Log In</h1>", unsafe_allow_html=True)
+        # TAMPILAN JIKA MENYALAKAN HALAMAN LOGIN
+        if st.session_state.halaman_aktif == "login":
+            st.markdown("<h1 style='text-align: center; color: black; font-size: 34px; margin: 0;'>Log In</h1>", unsafe_allow_html=True)
             st.markdown("<div class='app-title-tk'>Aplikasi Prediksi Kadaluwarsa Produk Hortikultura</div>", unsafe_allow_html=True)
             
             username_input = st.text_input("Username", placeholder="Username", label_visibility="collapsed", key="txt_user")
@@ -224,11 +220,20 @@ if not st.session_state.terautentikasi:
                     st.rerun()
                 else:
                     st.error("Username atau Password Salah")
-                    
-            st.markdown("<p style='text-align:center; font-size:12px; color:gray; margin-top:15px;'>Have not account? Pindahkan pilihan di tab atas</p>", unsafe_allow_html=True)
             
+            # --- NAVIGASI PINDAH KE BAWAH ---
+            st.write("---")
+            col_nav1, col_nav2 = st.columns([1.6, 1])
+            with col_nav1:
+                st.markdown("<p style='font-size:13px; margin-top:5px; color: black;'>Have not account?</p>", unsafe_allow_html=True)
+            with col_nav2:
+                if st.button("Create Account", use_container_width=True):
+                    st.session_state.halaman_aktif = "signup"
+                    st.rerun()
+                    
+        # TAMPILAN JIKA MENYALAKAN HALAMAN SIGNUP
         else:
-            st.markdown("<h1 style='text-align: center; color: black; font-size: 32px; margin: 0;'>Sign Up</h1>", unsafe_allow_html=True)
+            st.markdown("<h1 style='text-align: center; color: black; font-size: 34px; margin: 0;'>Sign Up</h1>", unsafe_allow_html=True)
             st.markdown("<div class='app-title-tk' style='color:#246329 !important;'>Create an account</div>", unsafe_allow_html=True)
             
             reg_email = st.text_input("Email", placeholder="Email", label_visibility="collapsed", key="reg_e")
@@ -250,12 +255,24 @@ if not st.session_state.terautentikasi:
                         cursor.execute("INSERT INTO data_pengguna(email,password) VALUES (?,?)", (reg_email, reg_pass))
                         conn.commit()
                         conn.close()
-                        st.success("Akun berhasil dibuat! Silakan masuk.")
+                        st.success("Akun berhasil dibuat!")
+                        st.session_state.halaman_aktif = "login"
+                        st.rerun()
                     except:
                         st.error("Email sudah digunakan")
+            
+            # --- NAVIGASI PINDAH KE BAWAH ---
+            st.write("---")
+            col_nav1, col_nav2 = st.columns([1.7, 1])
+            with col_nav1:
+                st.markdown("<p style='font-size:13px; margin-top:5px; color: black;'>Already have an account?</p>", unsafe_allow_html=True)
+            with col_nav2:
+                if st.button("Log In", use_container_width=True):
+                    st.session_state.halaman_aktif = "login"
+                    st.rerun()
 
 # ==============================================================================
-# LAYOUT UTAMA DASHBOARD (PERSIS 100% SEPERTI image_d1dcc6)
+# INTERFASE DASHBOARD UTAMA
 # ==============================================================================
 else:
     st.markdown("<div class='app-header-green'>OPTIMALISASI DISTRIBUSI LOGISTIK HORTIKULTURA</div>", unsafe_allow_html=True)
