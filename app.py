@@ -6,6 +6,7 @@ from PIL import Image
 import tempfile
 import os
 import base64
+from io import BytesIO
 
 # Konfigurasi dasar page Streamlit wide
 st.set_page_config(page_title="Optimalisasi Logistik Pertanian", layout="wide")
@@ -13,16 +14,21 @@ st.set_page_config(page_title="Optimalisasi Logistik Pertanian", layout="wide")
 DB_LOGIN = "manajemen_akses.db"
 DB_ANALISIS = "logistik_hortikultura.db"
 
-# FUNGSI BASE64 TERBARU: Membaca murni byte data dari logoo.jpg tanpa mengubah format asli
+# Fungsi Base64 yang sudah sukses memunculkan logomu
 def get_base64_logo(image_path):
     if os.path.exists(image_path):
-        with open(image_path, "rb") as img_file:
-            encoded_string = base64.b64encode(img_file.read()).decode()
-        return f"data:image/jpeg;base64,{encoded_string}"
+        try:
+            img = Image.open(image_path)
+            buffered = BytesIO()
+            img.save(buffered, format="PNG")
+            img_str = base64.b64encode(buffered.getvalue()).decode()
+            return f"data:image/png;base64,{img_str}"
+        except Exception as e:
+            return ""
     return ""
 
-# Mengonversi file logoo.jpg secara presisi
-LOGO_BASE64 = get_base64_logo("logoo.jpg")
+# KUNCI UTAMA: Menggunakan file 'image_de8820.png' yang sudah terbukti muncul jalurnya
+LOGO_BASE64 = get_base64_logo("image_de8820.png")
 
 # =========================================================
 # DATABASE INITIALIZATION
@@ -139,8 +145,14 @@ def cek_kondisi_roi(path_gambar, jenis):
 # =========================================================
 if "login" not in st.session_state: st.session_state.login = False
 if "page" not in st.session_state: st.session_state.page = "Login"
+
 if "hasil" not in st.session_state:
-    st.session_state.hasil = {"komoditas": "-", "kondisi": "Menunggu Analisis", "sisa": "-", "suhu": "-"}
+    st.session_state.hasil = {
+        "komoditas": "Belum Dipilih", 
+        "kondisi": "Menunggu Pengukuran...", 
+        "sisa": "-", 
+        "suhu": "-"
+    }
 if "riwayat_session" not in st.session_state: 
     st.session_state.riwayat_session = []
 
@@ -243,7 +255,7 @@ if not st.session_state.login and st.session_state.page == "Login":
             st.session_state.page = "Sign Up"
             st.rerun()
 
-# --- 2. HALAMAN SIGN UP ---
+# --- 2. HALAMAN SIGN UP (SIGN IN) ---
 elif not st.session_state.login and st.session_state.page == "Sign Up":
     st.markdown(f"""
     <style>
@@ -259,35 +271,40 @@ elif not st.session_state.login and st.session_state.page == "Sign Up":
             padding: 30px !important;
             font-family: sans-serif !important;
         }}
+        .signup-header-box {{
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }}
         .signup-title {{
-            font-size: 36px;
+            font-size: 34px;
             font-weight: bold;
             color: #000000;
             margin: 0;
         }}
         .signup-subtitle {{
-            font-size: 20px;
+            font-size: 19px;
             font-weight: bold;
             color: #437c37;
-            margin-top: 5px;
+            margin-top: 0px;
             margin-bottom: 20px;
         }}
-        .logo-bottom-container {{
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-        }}
-        .logo-bottom-img {{
-            width: 85px;
-            height: 85px;
+        .logo-signup-custom {{
+            width: 80px;
+            height: 80px;
             object-fit: contain;
+            margin-right: 15px;
         }}
     </style>
     """, unsafe_allow_html=True)
 
     with st.form("signup_form_container", clear_on_submit=False):
-        st.markdown("""
-        <div class="signup-title">Sign Up</div>
+        # FIX: Logo dipasang di atas form Sign Up sejajar teks agar rapi seperti halaman Login
+        st.markdown(f"""
+        <div class="signup-header-box">
+            <img class="logo-signup-custom" src="{LOGO_BASE64}">
+            <span class="signup-title">Sign Up</span>
+        </div>
         <div class="signup-subtitle">Create an account</div>
         """, unsafe_allow_html=True)
         
@@ -313,8 +330,6 @@ elif not st.session_state.login and st.session_state.page == "Sign Up":
         if st.form_submit_button("Log In"):
             st.session_state.page = "Login"
             st.rerun()
-            
-        st.markdown(f'<div class="logo-bottom-container"><img class="logo-bottom-img" src="{LOGO_BASE64}"></div>', unsafe_allow_html=True)
 
 # --- 3. DASHBOARD UTAMA ---
 else:
@@ -331,7 +346,7 @@ else:
             text-align: center;
             padding: 8px 0px;
             letter-spacing: 0.5px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             border: 1px solid #113f15;
         }
 
@@ -384,7 +399,6 @@ else:
             width: 100%;
         }
 
-        /* Tombol UI Qt Designer flat styling */
         .stButton>button {
             border-radius: 0px !important;
             font-family: sans-serif !important;
@@ -404,7 +418,6 @@ else:
     <div class="qt-main-header">OPTIMALISASI DISTRIBUSI LOGISTIK HORTIKULTURA</div>
     """, unsafe_allow_html=True)
 
-    # Inisialisasi Grid Layout Utama Kiri & Kanan Berdampingan Presisi
     col_kiri, col_kanan = st.columns([1, 1.3], gap="large")
 
     # PANEL KIRI: PANEL INPUT SCANNER
@@ -425,7 +438,6 @@ else:
         else:
             st.markdown('<div class="qt-preview-box">[ Kamera Belum Aktif / Gambar Kosong ]</div>', unsafe_allow_html=True)
 
-        # Baris Tombol Atas di dalam panel input scanner
         cb1, cb2 = st.columns(2)
         with cb1:
             st.markdown('<div class="col-blue-btn">', unsafe_allow_html=True)
@@ -438,7 +450,6 @@ else:
 
         st.write("")
         
-        # Baris Tombol Bawah di dalam panel input scanner
         cb3, cb4 = st.columns(2)
         with cb3:
             st.markdown('<div class="col-purple-btn">', unsafe_allow_html=True)
@@ -451,7 +462,7 @@ else:
             
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # PANEL KANAN: PANEL DASHBOARD UTAMA (SELALU SEJAJAR KANAN)
+    # PANEL KANAN: PANEL DASHBOARD UTAMA
     with col_kanan:
         st.markdown('<div class="group-box-panel"><div class="group-box-title">Dashboard</div>', unsafe_allow_html=True)
         
@@ -508,7 +519,6 @@ Rekomendasi Suhu   : {res["suhu"]}"""
         
         st.write("### Tabel Log Aktivitas Logistik")
         
-        # Tabel Riwayat aktivitas di dalam kotak dashboard kanan bawah
         st.dataframe(
             st.session_state.riwayat_session,
             use_container_width=True,
