@@ -12,9 +12,8 @@ st.set_page_config(page_title="Optimalisasi Logistik Pertanian", layout="wide")
 DB_LOGIN = "manajemen_akses.db"
 DB_ANALISIS = "logistik_hortikultura.db"
 
-# FUNGSI LOAD IMAGE AMAN: Memastikan file logo benar-benar ada sebelum dipasang
+# FUNGSI MUAT LOGO AMAN: Mencari file gambar yang tersedia di folder secara urut
 def muat_logo_kelompok():
-    # Daftar nama file logo yang kamu miliki di folder
     daftar_nama = ["image_de8820.png", "image_de8b69.png", "logoo.jpg", "logo.png"]
     for nama in daftar_nama:
         if os.path.exists(nama):
@@ -181,34 +180,46 @@ if not st.session_state.login and st.session_state.page == "Login":
             z-index: 0;
         }
         
+        /* Box Form Login Utama */
         div[data-testid="stForm"] {
             background-color: #ffffff !important;
             border: 1px solid #c0c0c0 !important;
             border-radius: 4px !important;
             box-shadow: 0px 4px 10px rgba(0,0,0,0.1) !important;
             width: 440px !important;
-            margin: 40px auto !important;
+            margin: 10px auto !important;
             padding: 30px !important;
             font-family: sans-serif !important;
             position: relative !important;
             z-index: 10 !important;
+        }
+        
+        /* Pengatur posisi container luar agar pas di tengah layar */
+        .login-wrapper-box {
+            width: 440px;
+            margin: 40px auto 0px auto;
+            text-align: center;
+            position: relative;
+            z-index: 20;
         }
     </style>
     <div class="circle-decor-top"></div>
     <div class="circle-decor-bottom"></div>
     """, unsafe_allow_html=True)
 
-    with st.form("login_form_container", clear_on_submit=False):
-        # Gunakan sistem kolom native Streamlit untuk meletakkan logo di sebelah judul teks Login
-        c_logo, c_text = st.columns([1, 2])
-        with c_logo:
-            if LOGO_OBJEK is not None:
-                st.image(LOGO_OBJEK, width=95)
-        with c_text:
-            st.markdown("<h1 style='margin:0; padding-top:10px; color:black;'>Log In</h1>", unsafe_allow_html=True)
+    # JALUR AMAN: Letakkan logo & judul di luar form (menggunakan layout grid native)
+    st.markdown('<div class="login-wrapper-box">', unsafe_allow_html=True)
+    c_space1, c_logo_area, c_space2 = st.columns([1.5, 1, 1.5])
+    with c_logo_area:
+        if LOGO_OBJEK is not None:
+            st.image(LOGO_OBJEK, use_container_width=True)
             
-        st.markdown("<p style='color: black; font-weight: bold; margin-top: 10px;'>Aplikasi Prediksi Kadaluwarsa Produk Hortikultura</p>", unsafe_allow_html=True)
-        
+    st.markdown("<h1 style='margin:10px 0 0 0; color:black; text-align:center; font-size:32px;'>Log In</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='color: black; font-weight: bold; margin: 5px 0 15px 0; text-align:center; font-size:14px;'>Aplikasi Prediksi Kadaluwarsa Produk Hortikultura</p>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Box input form murni tanpa modifikasi kolom html di dalamnya (Anti-Blank)
+    with st.form("login_form_container", clear_on_submit=False):
         email = st.text_input("Username", key="login_email")
         password = st.text_input("Password", type="password", key="login_pass")
         
@@ -240,23 +251,31 @@ elif not st.session_state.login and st.session_state.page == "Sign Up":
             border-radius: 4px !important;
             box-shadow: 0px 4px 10px rgba(0,0,0,0.1) !important;
             width: 440px !important;
-            margin: 40px auto !important;
+            margin: 10px auto !important;
             padding: 30px !important;
             font-family: sans-serif !important;
+        }
+        
+        .signup-wrapper-box {
+            width: 440px;
+            margin: 40px auto 0px auto;
+            text-align: center;
         }
     </style>
     """, unsafe_allow_html=True)
 
-    with st.form("signup_form_container", clear_on_submit=False):
-        c_logo, c_text = st.columns([1, 2])
-        with c_logo:
-            if LOGO_OBJEK is not None:
-                st.image(LOGO_OBJEK, width=90)
-        with c_text:
-            st.markdown("<h1 style='margin:0; padding-top:5px; color:black;'>Sign Up</h1>", unsafe_allow_html=True)
+    # JALUR AMAN: Letakkan logo & judul Sign Up di luar form agar tidak crash
+    st.markdown('<div class="signup-wrapper-box">', unsafe_allow_html=True)
+    cs_space1, cs_logo_area, cs_space2 = st.columns([1.6, 1, 1.6])
+    with cs_logo_area:
+        if LOGO_OBJEK is not None:
+            st.image(LOGO_OBJEK, use_container_width=True)
             
-        st.markdown("<p style='color: #437c37; font-weight: bold; margin-top: 5px; margin-bottom: 15px;'>Create an account</p>", unsafe_allow_html=True)
-        
+    st.markdown("<h1 style='margin:10px 0 0 0; color:black; text-align:center; font-size:32px;'>Sign Up</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #437c37; font-weight: bold; margin: 5px 0 15px 0; text-align:center; font-size:15px;'>Create an account</p>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    with st.form("signup_form_container", clear_on_submit=False):
         new_email = st.text_input("Email", key="su_email")
         new_password = st.text_input("Password", type="password", key="su_pass")
         confirm = st.text_input("Confirm Password", type="password", key="su_confirm")
