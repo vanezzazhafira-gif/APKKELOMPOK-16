@@ -12,7 +12,7 @@ st.set_page_config(page_title="Optimalisasi Logistik Pertanian", layout="wide")
 DB_LOGIN = "manajemen_akses.db"
 DB_ANALISIS = "logistik_hortikultura.db"
 
-# FUNGSI MUAT LOGO AMAN: Mencari file gambar yang tersedia di folder secara urut
+# FUNGSI MUAT LOGO: Mencari file gambar yang tersedia di folder secara urut
 def muat_logo_kelompok():
     daftar_nama = ["image_de8820.png", "image_de8b69.png", "logoo.jpg", "logo.png"]
     for nama in daftar_nama:
@@ -180,7 +180,15 @@ if not st.session_state.login and st.session_state.page == "Login":
             z-index: 0;
         }
         
-        /* Box Form Login Utama */
+        /* Container Pembungkus Form Luar */
+        .login-wrapper-box {
+            width: 440px;
+            margin: 40px auto 0px auto;
+            position: relative;
+            z-index: 20;
+        }
+        
+        /* Box Form Isi Input */
         div[data-testid="stForm"] {
             background-color: #ffffff !important;
             border: 1px solid #c0c0c0 !important;
@@ -190,35 +198,24 @@ if not st.session_state.login and st.session_state.page == "Login":
             margin: 10px auto !important;
             padding: 30px !important;
             font-family: sans-serif !important;
-            position: relative !important;
-            z-index: 10 !important;
-        }
-        
-        /* Pengatur posisi container luar agar pas di tengah layar */
-        .login-wrapper-box {
-            width: 440px;
-            margin: 40px auto 0px auto;
-            text-align: center;
-            position: relative;
-            z-index: 20;
         }
     </style>
     <div class="circle-decor-top"></div>
     <div class="circle-decor-bottom"></div>
     """, unsafe_allow_html=True)
 
-    # JALUR AMAN: Letakkan logo & judul di luar form (menggunakan layout grid native)
+    # Cetak judul dan logo tepat di tengah atas form menggunakan metode div wrapper (Aman & Anti Pecah)
     st.markdown('<div class="login-wrapper-box">', unsafe_allow_html=True)
-    c_space1, c_logo_area, c_space2 = st.columns([1.5, 1, 1.5])
-    with c_logo_area:
-        if LOGO_OBJEK is not None:
-            st.image(LOGO_OBJEK, use_container_width=True)
+    if LOGO_OBJEK is not None:
+        # Menggunakan kontainer HTML centered custom agar ukuran gambar stabil
+        st.markdown('<div style="display: flex; justify-content: center; margin-bottom: 10px;">', unsafe_allow_html=True)
+        st.image(LOGO_OBJEK, width=110)
+        st.markdown('</div>', unsafe_allow_html=True)
             
-    st.markdown("<h1 style='margin:10px 0 0 0; color:black; text-align:center; font-size:32px;'>Log In</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='margin:5px 0; color:black; text-align:center; font-size:32px;'>Log In</h1>", unsafe_allow_html=True)
     st.markdown("<p style='color: black; font-weight: bold; margin: 5px 0 15px 0; text-align:center; font-size:14px;'>Aplikasi Prediksi Kadaluwarsa Produk Hortikultura</p>", unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Box input form murni tanpa modifikasi kolom html di dalamnya (Anti-Blank)
     with st.form("login_form_container", clear_on_submit=False):
         email = st.text_input("Username", key="login_email")
         password = st.text_input("Password", type="password", key="login_pass")
@@ -245,6 +242,11 @@ elif not st.session_state.login and st.session_state.page == "Sign Up":
     <style>
         .stApp { background-color: #f3f3f3 !important; }
         
+        .signup-wrapper-box {
+            width: 440px;
+            margin: 40px auto 0px auto;
+        }
+        
         div[data-testid="stForm"] {
             background-color: #ffffff !important;
             border: 1px solid #c0c0c0 !important;
@@ -255,23 +257,16 @@ elif not st.session_state.login and st.session_state.page == "Sign Up":
             padding: 30px !important;
             font-family: sans-serif !important;
         }
-        
-        .signup-wrapper-box {
-            width: 440px;
-            margin: 40px auto 0px auto;
-            text-align: center;
-        }
     </style>
     """, unsafe_allow_html=True)
 
-    # JALUR AMAN: Letakkan logo & judul Sign Up di luar form agar tidak crash
     st.markdown('<div class="signup-wrapper-box">', unsafe_allow_html=True)
-    cs_space1, cs_logo_area, cs_space2 = st.columns([1.6, 1, 1.6])
-    with cs_logo_area:
-        if LOGO_OBJEK is not None:
-            st.image(LOGO_OBJEK, use_container_width=True)
+    if LOGO_OBJEK is not None:
+        st.markdown('<div style="display: flex; justify-content: center; margin-bottom: 10px;">', unsafe_allow_html=True)
+        st.image(LOGO_OBJEK, width=110)
+        st.markdown('</div>', unsafe_allow_html=True)
             
-    st.markdown("<h1 style='margin:10px 0 0 0; color:black; text-align:center; font-size:32px;'>Sign Up</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='margin:5px 0; color:black; text-align:center; font-size:32px;'>Sign Up</h1>", unsafe_allow_html=True)
     st.markdown("<p style='color: #437c37; font-weight: bold; margin: 5px 0 15px 0; text-align:center; font-size:15px;'>Create an account</p>", unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
