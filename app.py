@@ -14,21 +14,26 @@ st.set_page_config(page_title="Optimalisasi Logistik Pertanian", layout="wide")
 DB_LOGIN = "manajemen_akses.db"
 DB_ANALISIS = "logistik_hortikultura.db"
 
-# Fungsi Base64 yang sudah sukses memunculkan logomu
-def get_base64_logo(image_path):
-    if os.path.exists(image_path):
-        try:
-            img = Image.open(image_path)
-            buffered = BytesIO()
-            img.save(buffered, format="PNG")
-            img_str = base64.b64encode(buffered.getvalue()).decode()
-            return f"data:image/png;base64,{img_str}"
-        except Exception as e:
-            return ""
+# FUNGSI BASE64 PENCARI OTOMATIS (Mencegah logo hilang akibat beda nama file)
+def get_base64_logo_auto():
+    # Daftar nama file yang kemungkinan kamu gunakan di folder project
+    kemungkinan_nama_file = ["image_de8820.png", "image_de8b69.png", "logoo.jpg", "logo.png"]
+    
+    for nama_file in kemungkinan_nama_file:
+        if os.path.exists(nama_file):
+            try:
+                img = Image.open(nama_file)
+                buffered = BytesIO()
+                # Paksa konversi ke PNG agar transparansi lingkaran tetap terjaga rapi
+                img.save(buffered, format="PNG")
+                img_str = base64.b64encode(buffered.getvalue()).decode()
+                return f"data:image/png;base64,{img_str}"
+            except:
+                continue
     return ""
 
-# KUNCI UTAMA: Menggunakan file 'image_de8820.png' yang sudah terbukti muncul jalurnya
-LOGO_BASE64 = get_base64_logo("image_de8820.png")
+# Ambil string logo secara otomatis dari file yang tersedia di foldermu
+LOGO_BASE64 = get_base64_logo_auto()
 
 # =========================================================
 # DATABASE INITIALIZATION
@@ -156,7 +161,6 @@ if "hasil" not in st.session_state:
 if "riwayat_session" not in st.session_state: 
     st.session_state.riwayat_session = []
 
-# Sembunyikan header default Streamlit
 st.markdown("<style>header[data-testid='stHeader'] {display:none;}</style>", unsafe_allow_html=True)
 
 # =========================================================
@@ -255,7 +259,7 @@ if not st.session_state.login and st.session_state.page == "Login":
             st.session_state.page = "Sign Up"
             st.rerun()
 
-# --- 2. HALAMAN SIGN UP (SIGN IN) ---
+# --- 2. HALAMAN SIGN UP ---
 elif not st.session_state.login and st.session_state.page == "Sign Up":
     st.markdown(f"""
     <style>
@@ -299,7 +303,6 @@ elif not st.session_state.login and st.session_state.page == "Sign Up":
     """, unsafe_allow_html=True)
 
     with st.form("signup_form_container", clear_on_submit=False):
-        # FIX: Logo dipasang di atas form Sign Up sejajar teks agar rapi seperti halaman Login
         st.markdown(f"""
         <div class="signup-header-box">
             <img class="logo-signup-custom" src="{LOGO_BASE64}">
@@ -506,7 +509,6 @@ else:
                     new_id = len(st.session_state.riwayat_session) + 1
                     st.session_state.riwayat_session.append((new_id, nama_veg, kond_veg, string_sisa, suhu_rekom))
 
-        # Output Terminal Monitor Box Hasil Scan
         res = st.session_state.hasil
         text_output = f"""Hasil Pindai Sistem Monitor
 ======================================
