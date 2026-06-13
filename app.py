@@ -5,18 +5,6 @@ import numpy as np
 from PIL import Image
 import os
 import time
-import sys
-import subprocess
-
-# ==============================================================================
-# OMATISASI INSTALASI LIBRARY (LANGSUNG DARI KODE)
-# ==============================================================================
-try:
-    from streamlit_cropper import st_cropper
-except ImportError:
-    # Jika streamlit-cropper belum ada, instal otomatis lewat background process
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "streamlit-cropper"])
-    from streamlit_cropper import st_cropper
 
 # ==============================================================================
 # 1. INISIALISASI DATABASE & LOGIKA SISTEM (OTOMATIS BERSIH SAAT RESTART)
@@ -62,9 +50,9 @@ def init_databases():
 init_databases()
 
 def rekomendasi_suhu(jenis):
-    if jenis == "Wortel": return "0 - 4 CC"
-    elif jenis == "Cabai": return "7 - 10 CC"
-    elif jenis == "Brokoli": return "0 - 2 CC"
+    if jenis == "Wortel": return "0 - 4 °C"
+    elif jenis == "Cabai": return "7 - 10 °C"
+    elif jenis == "Brokoli": return "0 - 2 °C"
     return "-"
 
 def cek_kondisi_citra(cv_img, jenis):
@@ -121,10 +109,6 @@ if "foto_input" not in st.session_state:
     st.session_state.foto_input = None
 if "mode_input" not in st.session_state:
     st.session_state.mode_input = None
-if "aktifkan_roi" not in st.session_state:
-    st.session_state.aktifkan_roi = False
-if "foto_terpotong" not in st.session_state:
-    st.session_state.foto_terpotong = None
 
 st.markdown("""
 <style>
@@ -213,6 +197,7 @@ if st.session_state.halaman == "login":
         st.markdown('</div>', unsafe_allow_html=True)
         
         st.markdown("<h1 style='text-align: center; color: #000000; font-size: 50px; font-weight: bold; margin-top: 5px; margin-bottom: 25px;'>Log In</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #000000; font-size: 15px; font-weight: bold; margin-bottom: 40px;'>Aplikasi Prediksi Kadaluwarsa Produk Hortikultura</p>", unsafe_allow_html=True)
         
         in_user = st.text_input("Username", placeholder="Masukkan username anda", key="log_user")
         in_pass = st.text_input("Password", placeholder="Masukkan password anda", type="password", key="log_pass")
@@ -249,7 +234,7 @@ if st.session_state.halaman == "login":
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. HALAMAN INTERFACE: SIGN UP
+# 4. HALAMAN INTERFACE: SIGN UP (PERBAIKAN PEMBERITAHUAN BERHASIL)
 # ==============================================================================
 elif st.session_state.halaman == "signup":
     st.markdown('<div class="bg-circle-top-right"></div>', unsafe_allow_html=True)
@@ -269,6 +254,7 @@ elif st.session_state.halaman == "signup":
         st.markdown('</div>', unsafe_allow_html=True)
         
         st.markdown("<h1 style='text-align: center; color: #000000; font-size: 50px; font-weight: bold; margin-top: 5px; margin-bottom: 25px;'>Sign Up</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #527a4d; font-size: 15px; font-weight: bold; margin-bottom: 30px;'>Create an account</p>", unsafe_allow_html=True)
         
         reg_email = st.text_input("Email", placeholder="Masukkan email baru", key="reg_e")
         reg_pass1 = st.text_input("Password", placeholder="Buat kata sandi", type="password", key="reg_p1")
@@ -329,8 +315,6 @@ elif st.session_state.halaman == "dashboard":
         if st.button("Log Out", use_container_width=True):
             st.session_state.foto_input = None
             st.session_state.mode_input = None
-            st.session_state.aktifkan_roi = False
-            st.session_state.foto_terpotong = None
             st.session_state.halaman = "login"
             st.rerun()
             
@@ -340,57 +324,43 @@ elif st.session_state.halaman == "dashboard":
         st.markdown("### **Panel Input Scanner**")
         pilihan_sayur = st.selectbox("Komoditas:", ["Wortel", "Cabai", "Brokoli"], label_visibility="visible")
         
-        # Area Pratinjau Gambar / Kotak ROI Dinamis
         with st.container(border=True):
             if st.session_state.foto_input is None:
                 st.markdown("<div style='height: 250px; background-color: #e8e8e8; display: flex; align-items: center; justify-content: center; border-radius:4px; color:#555;'><B>[ Preview ]</B></div>", unsafe_allow_html=True)
             else:
-                if st.session_state.aktifkan_roi:
-                    st.markdown("<p style='color:#ff4b4b; font-size:13px; font-weight:bold; margin:0;'>Geser/atur kotak merah di bawah untuk menandai area objek:</p>", unsafe_allow_html=True)
-                    cropped_img = st_cropper(st.session_state.foto_input, realtime_update=True, box_color='#FF0000', aspect_ratio=None)
-                    st.session_state.foto_terpotong = cropped_img
-                else:
-                    st.image(st.session_state.foto_input, use_container_width=True)
+                st.image(st.session_state.foto_input, use_container_width=True)
                 
-        # Tombol Pemicu Pemasukan Gambar
+        # Tombol Pemicu Menu Utama
         col_m1, col_m2 = st.columns(2)
         with col_m1:
             if st.button("Pilih Foto dari Galeri", use_container_width=True):
                 st.session_state.mode_input = "galeri"
-                st.session_state.aktifkan_roi = False
         with col_m2:
             if st.button("Buka Kamera", use_container_width=True):
                 st.session_state.mode_input = "kamera"
-                st.session_state.aktifkan_roi = False
 
+        # Tampilan Unggah Berkas (Hanya muncul jika tombol Galeri ditekan)
         if st.session_state.mode_input == "galeri":
             file_terunggah = st.file_uploader("Unggah berkas foto atau gambar sayur:", type=["jpg", "png", "jpeg"])
             if file_terunggah:
                 st.session_state.foto_input = Image.open(file_terunggah)
                 
+        # Tampilan Kamera Aktif (Hanya muncul jika tombol Kamera ditekan)
         if st.session_state.mode_input == "kamera":
             ambil_kamera = st.camera_input("Ambil Foto langsung dari Kamera:")
             if ambil_kamera:
                 st.session_state.foto_input = Image.open(ambil_kamera)
         
-        # Fungsi penandaan area (ROI) kini aktif bergantian (toggle) untuk memanggil cropper
-        if st.button("Tandai Area Sayur (ROI)", use_container_width=True):
-            if st.session_state.foto_input is not None:
-                st.session_state.aktifkan_roi = not st.session_state.aktifkan_roi
-                st.rerun()
-            else:
-                st.warning("Mohon masukkan atau unggah foto terlebih dahulu sebelum menandai area!")
+        st.button("Tandai Area Sayur (ROI)", use_container_width=True)
         
         st.write("")
         btn_proses_analisis = st.button("Jalankan Analisis", use_container_width=True, type="primary")
         
         if btn_proses_analisis:
-            foto_final = st.session_state.foto_terpotong if (st.session_state.aktifkan_roi and st.session_state.foto_terpotong is not None) else st.session_state.foto_input
-            
-            if foto_final is None:
+            if st.session_state.foto_input is None:
                 st.warning("Mohon masukkan foto sayuran terlebih dahulu!")
             else:
-                img_mat = np.array(foto_final)
+                img_mat = np.array(st.session_state.foto_input)
                 if len(img_mat.shape) == 3 and img_mat.shape[2] == 4:
                     img_mat = cv2.cvtColor(img_mat, cv2.COLOR_RGBA2RGB)
                 img_bgr = cv2.cvtColor(img_mat, cv2.COLOR_RGB2BGR)
@@ -404,10 +374,7 @@ elif st.session_state.halaman == "dashboard":
                     
                     conn = sqlite3.connect(DB_ANALISIS_PATH)
                     cursor = conn.cursor()
-                    
-                    # Bersihkan data lama di tabel database sebelum menyimpan data hasil pemindaian yang baru
-                    cursor.execute("DELETE FROM riwayat_pindai") 
-                    
+                    cursor.execute("DELETE FROM riwayat_pindai") # Bersihkan riwayat lama saat di-scan ulang
                     cursor.execute("""
                         INSERT INTO riwayat_pindai (komoditas, kondisi, sisa_segar, suhu_simpan)
                         VALUES (?, ?, ?, ?)
@@ -423,8 +390,7 @@ elif st.session_state.halaman == "dashboard":
         
         conn = sqlite3.connect(DB_ANALISIS_PATH)
         cursor = conn.cursor()
-        # Mengambil baris data yang paling terakhir/terbaru dimasukkan saja (LIMIT 1)
-        cursor.execute("SELECT id, komoditas, kondisi, sisa_segar, suhu_simpan FROM riwayat_pindai ORDER BY id DESC LIMIT 1")
+        cursor.execute("SELECT id, komoditas, kondisi, sisa_segar, suhu_simpan FROM riwayat_pindai ORDER BY id DESC")
         isi_tabel = cursor.fetchall()
         conn.close()
         
@@ -438,12 +404,11 @@ elif st.session_state.halaman == "dashboard":
             <p style="margin: 0; text-align: center;">====================</p>
             <p style="margin: 5px 0 5px 40px;">Komoditas : {v_nama}</p>
             <p style="margin: 5px 0 5px 40px;">Kondisi   : {v_kondisi}</p>
-            <p style="margin: 5px 0 5px 40px;">Sisa      : {v_sisa}</p>
+            <p style="margin: 5px 0 5px 40px;">Sisa      : {v_sisa} Hari</p>
             <p style="margin: 5px 0 5px 40px;">Suhu Simpan : {v_suhu}</p>
         </div>
         """, unsafe_allow_html=True)
         
-        # Komponen tabel di bawah ini otomatis hanya berisi 1 baris (pemindaian terakhir)
         if isi_tabel:
             import pandas as pd
             df_monitor = pd.DataFrame(isi_tabel, columns=["ID", "Nama", "Kondisi", "Sisa", "Suhu"])
