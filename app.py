@@ -88,127 +88,145 @@ def cek_kondisi_citra(cv_img, jenis):
     return jenis, status, sisa
 
 # ==============================================================================
-# CSS CONFIG & LAYOUT DESKTOP
+# CSS CORE REPLICA ENGINE (MENIRU LAYOUT TKINTER WINDOWS)
 # ==============================================================================
 st.set_page_config(page_title="Optimalisasi Logistik Pertanian", page_icon="🌱", layout="wide")
 
 st.markdown("""
 <style>
-/* Sembunyikan header default streamlit */
-header, footer, [data-testid="stHeader"] { visibility: hidden !important; height: 0px !important; }
+/* Sembunyikan Header/Footer Default Streamlit */
+header, footer, [data-testid="stHeader"], [data-testid="stToolbar"] { visibility: hidden !important; height: 0px !important; }
 
-/* Background dasar aplikasi web */
+/* Background Dasar Desktop Windows (Abu-abu Terang) */
 .stApp { background-color: #f0f0f0 !important; }
 
-/* Membungkus form login ke dalam Card putih di tengah */
-div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stCustomComponentToWebpage"]) {
+/* ================== STYLE KOTAK AUTH (LOGIN / SIGNUP) ================== */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(div[id="auth_card_trigger"]) {
     background-color: white !important;
     border: 1px solid #bcbcbc !important;
     border-radius: 8px !important;
-    padding: 35px !important;
-    box-shadow: 0px 4px 15px rgba(0,0,0,0.12) !important;
-    max-width: 450px !important;
-    margin: auto !important;
+    padding: 30px !important;
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.1) !important;
+    max-width: 420px !important;
+    margin: 60px auto !important;
 }
 
-.app-title-tk {
-    font-size: 14px !important;
-    font-weight: bold !important;
+/* Mengubah Tombol Login/Signup Menjadi Style Standar Khas Desktop */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(div[id="auth_card_trigger"]) button {
+    background-color: #e1e1e1 !important;
     color: black !important;
-    text-align: center !important;
-    margin-top: 5px !important;
-    margin-bottom: 25px !important;
+    border: 1px solid #acacac !important;
+    border-radius: 3px !important;
+    font-weight: bold !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(div[id="auth_card_trigger"]) button:hover {
+    background-color: #e5f1fb !important;
+    border-color: #0078d7 !important;
 }
 
-/* --- PANEL UTAMA DASHBOARD --- */
+/* Navigasi Teks Bawah Khas Sketsa */
+.nav-text-container { text-align: right !important; margin-top: 15px; }
+.nav-text-container button { background: none !important; border: none !important; color: #0066cc !important; text-decoration: underline !important; font-size: 14px !important; padding: 0 !important;}
+
+/* ================== STYLE DASHBOARD UTAMA ================== */
 .app-header-green {
     background-color: #246329 !important;
     border: 1px solid #18441c;
-    padding: 10px !important;
+    padding: 12px !important;
     text-align: center !important;
     color: white !important;
-    font-size: 18px !important;
+    font-size: 20px !important;
     font-weight: bold !important;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+    letter-spacing: 0.5px;
 }
+
+/* Group Box Frame Seperti Sketsa */
 .group-box {
-    background-color: #f9f9f9 !important;
+    background-color: #ffffff !important;
     border: 1px solid #b8b8b8 !important;
-    border-radius: 3px !important;
-    padding: 15px !important;
+    border-radius: 4px !important;
+    padding: 25px 18px 18px 18px !important;
     position: relative;
-    min-height: 540px;
+    min-height: 580px;
 }
 .group-box-title {
     position: absolute;
     top: -12px;
-    left: 15px;
+    left: 12px;
     background-color: #f0f0f0;
-    padding: 0 5px;
+    padding: 0 6px;
     font-weight: bold !important;
-    font-size: 13px !important;
+    font-size: 14px !important;
     color: black !important;
 }
+
+/* Frame Hasil Pindai Monospace */
 .result-display-frame {
-    text-align: center !important;
+    text-align: left !important;
     font-family: monospace !important;
     font-size: 15px !important;
     color: black !important;
     line-height: 1.6;
-    margin-top: 10px;
+    background-color: #fdfdfd;
+    border: 1px dashed #b5b5b5;
+    padding: 12px;
     margin-bottom: 20px;
 }
 
-/* --- STYLING WARNA TOMBOL --- */
-.btn-blue button { background-color: #1e81d2 !important; color: white !important; border-radius: 0px !important; }
-.btn-orange button { background-color: #f19f12 !important; color: white !important; border-radius: 0px !important; }
-.btn-purple button { background-color: #7a1fa2 !important; color: white !important; border-radius: 0px !important; }
-.btn-green button { background-color: #2c7d32 !important; color: white !important; border-radius: 0px !important; font-weight: bold !important; }
+/* Pengatur Warna Tombol Aksi di Dashboard */
+.btn-style button { background-color: #e1e1e1 !important; color: black !important; border-radius: 2px !important; border: 1px solid #acacac !important; margin-bottom: -5px; text-align: center !important; }
+.btn-style button:hover { background-color: #cfcfcf !important; }
+.btn-green-submit button { background-color: #2c7d32 !important; color: white !important; border: 1px solid #1c5221 !important; font-weight: bold !important; }
+.btn-green-submit button:hover { background-color: #215e26 !important; }
 
-div[data-baseweb="input"] { background-color: white !important; border: 1px solid #a0a0a0 !important; color: black !important; }
-div[data-baseweb="select"] { background-color: white !important; color: black !important; }
-div[data-testid="stMarkdownContainer"] p { color: black !important; }
+/* Force Semua Inputan Berwarna Terang Teks Hitam */
+div[data-baseweb="input"] input, div[data-baseweb="select"] > div { background-color: white !important; color: black !important; }
+div[data-baseweb="input"] { border: 1px solid #a0a0a0 !important; }
+p, span, label { color: black !important; }
+div[data-testid="stDataFrame"] { background-color: white !important; border: 1px solid #cccccc !important; }
 </style>
 """, unsafe_allow_html=True)
 
 if "terautentikasi" not in st.session_state:
     st.session_state.terautentikasi = False
-if "user_aktif" not in st.session_state:
-    st.session_state.user_aktif = ""
+if "halaman_aktif" not in st.session_state:
+    st.session_state.halaman_aktif = "login"
 if "foto_terpilih" not in st.session_state:
     st.session_state.foto_terpilih = None
-if "halaman_aktif" not in st.session_state:
-    st.session_state.halaman_aktif = "login"  # Default ke halaman login
 
 # ==============================================================================
-# INTERFASE LOGIN & SIGNUP (NAVIGASI DIPINDAH KE BAGIAN BAWAH FORM)
+# TAMPILAN 1: REPLIKA LOGIN / SIGN UP SCREEN
 # ==============================================================================
 if not st.session_state.terautentikasi:
-    st.write("<br><br>", unsafe_allow_html=True)
+    _, center_col, _ = st.columns([1, 1.1, 1])
     
-    col_kiri, col_tengah, col_kanan = st.columns([1, 1.1, 1])
-    
-    with col_tengah:
-        # Pemicu CSS container
-        st.write("") 
+    with center_col:
+        # Pemicu CSS Kotak Putih Auth
+        st.markdown('<div id="auth_card_trigger"></div>', unsafe_allow_html=True)
         
-        # 1. Tampilkan Logo Kelompok Paling Atas di Dalam Kotak
-        if os.path.exists("logoo.PNG"):
-            c_img1, c_img2, c_img3 = st.columns([1, 1.2, 1])
-            with c_img2:
-                st.image("logoo.PNG", width=100)
-                
-        # TAMPILAN JIKA MENYALAKAN HALAMAN LOGIN
+        # --- MODE HALAMAN LOGIN ---
         if st.session_state.halaman_aktif == "login":
-            st.markdown("<h1 style='text-align: center; color: black; font-size: 34px; margin: 0;'>Log In</h1>", unsafe_allow_html=True)
-            st.markdown("<div class='app-title-tk'>Aplikasi Prediksi Kadaluwarsa Produk Hortikultura</div>", unsafe_allow_html=True)
+            # 1. Gambar/Logo Paling Atas
+            if os.path.exists("logoo.PNG"):
+                st.image("logoo.PNG", use_container_width=True)
+            else:
+                st.markdown("<div style='height:100px; background:#e0e0e0; text-align:center; padding-top:35px; color:gray;'>[ login.jpeg ]</div>", unsafe_allow_html=True)
             
+            st.write("<br>", unsafe_allow_html=True)
+            
+            # 2. Input Fields Berurutan
             username_input = st.text_input("Username", placeholder="Username", label_visibility="collapsed", key="txt_user")
             st.write("")
             password_input = st.text_input("Password", placeholder="Password", type="password", label_visibility="collapsed", key="txt_pass")
             st.write("<br>", unsafe_allow_html=True)
             
-            if st.button("LOG IN", use_container_width=True):
+            # 3. Tombol LOG IN di Tengah Kecil
+            col_b1, col_b2, col_b3 = st.columns([1, 1.2, 1])
+            with col_b2:
+                btn_login = st.button("LOG IN", use_container_width=True)
+                
+            if btn_login:
                 conn = sqlite3.connect(DB_LOGIN_PATH)
                 cursor = conn.cursor()
                 cursor.execute("SELECT * FROM data_pengguna WHERE email=? AND password=?", (username_input, password_input))
@@ -216,26 +234,28 @@ if not st.session_state.terautentikasi:
                 conn.close()
                 if user:
                     st.session_state.terautentikasi = True
-                    st.session_state.user_aktif = username_input
                     st.rerun()
                 else:
                     st.error("Username atau Password Salah")
             
-            # --- NAVIGASI PINDAH KE BAWAH ---
-            st.write("---")
-            col_nav1, col_nav2 = st.columns([1.6, 1])
-            with col_nav1:
-                st.markdown("<p style='font-size:13px; margin-top:5px; color: black;'>Have not account?</p>", unsafe_allow_html=True)
-            with col_nav2:
-                if st.button("Create Account", use_container_width=True):
-                    st.session_state.halaman_aktif = "signup"
-                    st.rerun()
-                    
-        # TAMPILAN JIKA MENYALAKAN HALAMAN SIGNUP
+            # 4. Teks Tautan Pindah Halaman di Pojok Bawah
+            st.markdown("<div class='nav-text-container'>", unsafe_allow_html=True)
+            if st.button("Create Account", key="go_signup"):
+                st.session_state.halaman_aktif = "signup"
+                st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        # --- MODE HALAMAN SIGN UP ---
         else:
-            st.markdown("<h1 style='text-align: center; color: black; font-size: 34px; margin: 0;'>Sign Up</h1>", unsafe_allow_html=True)
-            st.markdown("<div class='app-title-tk' style='color:#246329 !important;'>Create an account</div>", unsafe_allow_html=True)
+            # 1. Gambar/Logo Paling Atas
+            if os.path.exists("logoo.PNG"):
+                st.image("logoo.PNG", use_container_width=True)
+            else:
+                st.markdown("<div style='height:100px; background:#e0e0e0; text-align:center; padding-top:35px; color:gray;'>[ signup.jpg ]</div>", unsafe_allow_html=True)
             
+            st.write("<br>", unsafe_allow_html=True)
+            
+            # 2. Input Fields Berurutan
             reg_email = st.text_input("Email", placeholder="Email", label_visibility="collapsed", key="reg_e")
             st.write("")
             reg_pass = st.text_input("Password", placeholder="Password", type="password", label_visibility="collapsed", key="reg_p")
@@ -243,7 +263,12 @@ if not st.session_state.terautentikasi:
             reg_confirm = st.text_input("Confirm Password", placeholder="Confirm Password", type="password", label_visibility="collapsed", key="reg_c")
             st.write("<br>", unsafe_allow_html=True)
             
-            if st.button("Sign Up", use_container_width=True):
+            # 3. Tombol Sign Up
+            col_s1, col_s2, col_s3 = st.columns([1, 1.2, 1])
+            with col_s2:
+                btn_signup = st.button("Sign Up", use_container_width=True)
+                
+            if btn_signup:
                 if reg_pass != reg_confirm:
                     st.error("Password tidak sama")
                 elif reg_email == "" or reg_pass == "":
@@ -255,62 +280,71 @@ if not st.session_state.terautentikasi:
                         cursor.execute("INSERT INTO data_pengguna(email,password) VALUES (?,?)", (reg_email, reg_pass))
                         conn.commit()
                         conn.close()
-                        st.success("Akun berhasil dibuat!")
+                        st.success("Akun sukses dibuat!")
                         st.session_state.halaman_aktif = "login"
                         st.rerun()
                     except:
-                        st.error("Email sudah digunakan")
+                        st.error("Email sudah terdaftar")
             
-            # --- NAVIGASI PINDAH KE BAWAH ---
-            st.write("---")
-            col_nav1, col_nav2 = st.columns([1.7, 1])
-            with col_nav1:
-                st.markdown("<p style='font-size:13px; margin-top:5px; color: black;'>Already have an account?</p>", unsafe_allow_html=True)
-            with col_nav2:
-                if st.button("Log In", use_container_width=True):
-                    st.session_state.halaman_aktif = "login"
-                    st.rerun()
+            # 4. Teks Tautan Kembali ke Login
+            st.markdown("<div class='nav-text-container'>", unsafe_allow_html=True)
+            if st.button("Log In", key="go_login"):
+                st.session_state.halaman_aktif = "login"
+                st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
 
 # ==============================================================================
-# INTERFASE DASHBOARD UTAMA
+# TAMPILAN 2: REPLIKA DASHBOARD UTAMA (DENGAN TATA LETAK JELAS DAN PRESISI)
 # ==============================================================================
 else:
+    # Header Panjang Hijau di Paling Atas
     st.markdown("<div class='app-header-green'>OPTIMALISASI DISTRIBUSI LOGISTIK HORTIKULTURA</div>", unsafe_allow_html=True)
     
-    col_out_1, col_out_2 = st.columns([9, 1])
-    with col_out_2:
+    # Tombol kecil Log Out ditaruh di atas kanan luar frame
+    o_l, o_r = st.columns([11.8, 1.2])
+    with o_r:
         if st.button("Log Out", use_container_width=True):
             st.session_state.terautentikasi = False
             st.rerun()
 
-    kolom_kiri, kolom_kanan = st.columns([1, 1.45])
+    # Memecah Layout Menjadi 2 Kolom Berdampingan Sesuai Sketsa
+    kolom_kiri, kolom_kanan = st.columns([1, 1.35])
     
-    # --- PANEL INPUT SCANNER ---
+    # ------------------ KOTAK 1: PANEL INPUT SCANNER (KIRI) ------------------
     with kolom_kiri:
         st.markdown("<div class='group-box'><div class='group-box-title'>Panel Input Scanner</div>", unsafe_allow_html=True)
         
+        # Komoditas Label & Dropdown
+        st.markdown("<p style='font-weight:bold; margin-bottom:2px;'>Komoditas</p>", unsafe_allow_html=True)
         pilih_komoditas = st.selectbox("", ["Wortel", "Cabai", "Brokoli"], label_visibility="collapsed")
         
-        st.markdown("<div style='background-color:#dcdcdc; border:1px solid #b0b0b0; height:270px; width:100%; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:10px;'>", unsafe_allow_html=True)
+        # Kotak Kerangka Preview Gambar
+        st.write("<p style='font-weight:bold; margin-top:10px; margin-bottom:2px;'>Preview Gambar</p>", unsafe_allow_html=True)
+        st.markdown("<div style='background-color:#dcdcdc; border:1px solid #b0b0b0; height:180px; width:100%; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:12px;'>", unsafe_allow_html=True)
         if st.session_state.foto_terpilih is None:
-            st.markdown("<span style='color:#666666; font-size:14px;'>[ Preview ]</span>", unsafe_allow_html=True)
+            st.markdown("<span style='color:#555555; font-size:14px;'>[ Preview Gambar ]</span>", unsafe_allow_html=True)
         else:
             st.image(st.session_state.foto_terpilih, use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
         
-        media_input = st.file_uploader("Upload", type=["jpg","png","jpeg"], label_visibility="collapsed", key="file_internal")
+        # Input upload file tersembunyi
+        media_input = st.file_uploader("", type=["jpg","png","jpeg"], label_visibility="collapsed", key="uploader_dash")
         if media_input:
             st.session_state.foto_terpilih = Image.open(media_input)
             
-        st.markdown("<div class='btn-blue'>", unsafe_allow_html=True)
+        # Tombol Aksi Sesuai Urutan Sketsa
+        st.markdown("<div class='btn-style'>", unsafe_allow_html=True)
         if st.button("Buka Kamera", use_container_width=True):
-            st.info("Unggah berkas foto secara langsung via file uploader di atas.")
-        st.markdown("</div><div class='btn-orange'>", unsafe_allow_html=True)
-        st.button("Pilih Foto dari Galeri", use_container_width=True)
-        st.markdown("</div><div class='btn-purple'>", unsafe_allow_html=True)
-        st.button("Tandai Area Sayur (ROI)", use_container_width=True)
-        st.markdown("</div><div class='btn-green'>", unsafe_allow_html=True)
+            st.info("Kamera Siap. Silakan unggah gambar lewat kolom di atas.")
+            
+        if st.button("Pilih Foto", use_container_width=True):
+            st.info("Gunakan kolom upload file di atas untuk memilih foto.")
+            
+        st.button("Pilih ROI", use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
         
+        # Tombol Eksekusi Analisis (Warna Hijau Khusus)
+        st.markdown("<div class='btn-style btn-green-submit' style='margin-top:10px;'>", unsafe_allow_html=True)
         btn_eksekusi = st.button("Jalankan Analisis", use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
         
@@ -334,10 +368,11 @@ else:
                 
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # --- PANEL DASHBOARD ---
+    # ------------------ KOTAK 2: DASHBOARD OUTPUT (KANAN) ------------------
     with kolom_kanan:
         st.markdown("<div class='group-box'><div class='group-box-title'>Dashboard</div>", unsafe_allow_html=True)
         
+        # Ambil data riwayat terbaru dari database sqlite3
         conn = sqlite3.connect(DB_ANALISIS_PATH)
         cursor = conn.cursor()
         cursor.execute("SELECT id, komoditas, kondisi, sisa_segar, suhu_simpan FROM riwayat_pindai ORDER BY id DESC")
@@ -348,20 +383,25 @@ else:
         if data_db:
             k_nama, k_kondisi, k_sisa, k_suhu = data_db[0][1], data_db[0][2], data_db[0][3], data_db[0][4]
             
+        # Tampilan Teks Hasil Utama
         st.markdown(f"""
         <div class='result-display-frame'>
             Hasil Pindai Sistem<br>
-            =====================<br>
+            ---------------------------<br>
             Komoditas : {k_nama}<br>
             Kondisi   : {k_kondisi}<br>
-            Sisa      : {k_sisa}<br>
-            Suhu Simpan : {k_suhu}
+            Sisa Hari : {k_sisa}<br>
+            Suhu      : {k_suhu}
         </div>
         """, unsafe_allow_html=True)
         
+        # Kerangka Tabel Riwayat Data Analisis
+        st.markdown("<p style='font-weight:bold; margin-bottom:5px;'>Riwayat Data</p>", unsafe_allow_html=True)
         if data_db:
             import pandas as pd
             df_tabel = pd.DataFrame(data_db, columns=["ID", "Nama", "Kondisi", "Sisa", "Suhu"])
-            st.dataframe(df_tabel, hide_index=True, use_container_width=True)
+            st.dataframe(df_tabel, hide_index=True, use_container_width=True, height=270)
+        else:
+            st.markdown("<div style='border:1px solid #ccc; background:white; color:gray; text-align:center; padding:40px;'>Belum ada data riwayat pindai.</div>", unsafe_allow_html=True)
             
         st.markdown("</div>", unsafe_allow_html=True)
