@@ -3,6 +3,7 @@ import sqlite3
 import cv2
 import numpy as np
 from PIL import Image
+import os
 
 # ==============================================================================
 # 1. INISIALISASI DATABASE & LOGIKA SISTEM (TETAP SAMA / JANGAN DIUBAH)
@@ -89,7 +90,7 @@ def cek_kondisi_citra(cv_img, jenis):
     return jenis, status, sisa
 
 # ==============================================================================
-# 2. SEGMEN LAYOUT CSS - SAMA PERSIS SEPERTI GAMBAR CONTOH NOMOR 1
+# 2. SEGMEN LAYOUT CSS & BACKGROUND ORNAMEN BULAT 
 # ==============================================================================
 st.set_page_config(page_title="Optimalisasi Logistik Pertanian", layout="wide")
 
@@ -98,16 +99,14 @@ if "halaman" not in st.session_state:
 if "foto_input" not in st.session_state:
     st.session_state.foto_input = None
 
-# Injeksi CSS agar ornamen pojok melengkung sempurna tanpa mengganggu objek input utama
 st.markdown("""
 <style>
-    /* Latar belakang putih bersih */
     .stApp {
         background-color: #ffffff !important;
     }
     header { visibility: hidden; }
     
-    /* Dekorasi Lingkaran Hijau Kanan Atas (Persis Gambar Nomor 1) */
+    /* Lingkaran Hijau Kanan Atas */
     .bg-circle-top-right {
         position: fixed;
         width: 450px;
@@ -119,7 +118,7 @@ st.markdown("""
         z-index: 0;
     }
 
-    /* Dekorasi Lingkaran Hijau Kiri Bawah (Persis Gambar Nomor 1) */
+    /* Lingkaran Hijau Kiri Bawah */
     .bg-circle-bottom-left {
         position: fixed;
         width: 450px;
@@ -131,7 +130,6 @@ st.markdown("""
         z-index: 0;
     }
 
-    /* Pembungkus Konten Utama di Tengah */
     .login-container {
         position: relative;
         z-index: 10;
@@ -140,7 +138,15 @@ st.markdown("""
         padding-top: 10px;
     }
     
-    /* Memaksa text box input Streamlit agar serasi */
+    /* Container pembungkus logo baru agar pas di tengah atas form */
+    .logo-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0 auto 10px auto;
+        width: 100%;
+    }
+    
     .stTextInput>div>div>input {
         background-color: #ffffff !important;
         color: #000000 !important;
@@ -149,40 +155,38 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Nama file logo baru Anda (Pastikan gambarnya sudah disimpan dengan nama ini di folder proyek)
+NAMA_FILE_LOGO = "logo.png"
+
 # ==============================================================================
-# 3. HALAMAN INTERFACE: LOG IN (MENGGUNAKAN LOGO BARU GAMBAR 2)
+# 3. HALAMAN INTERFACE: LOG IN
 # ==============================================================================
 if st.session_state.halaman == "login":
-    # Memasang Background Lingkaran Statis
     st.markdown('<div class="bg-circle-top-right"></div>', unsafe_allow_html=True)
     st.markdown('<div class="bg-circle-bottom-left"></div>', unsafe_allow_html=True)
     
-    # Membuka Lajur Kolom Tengah agar Komponen Terkunci di Tengah
     col_space1, col_center, col_space2 = st.columns([1.2, 1, 1.2])
     
     with col_center:
         st.markdown('<div class="login-container">', unsafe_allow_html=True)
         
-        # PERBAIKAN LOGO GAMBAR 2: Menggunakan container utuh tanpa dibatasi kolom kanan kiri 
-        # sehingga teks "OPTIMALISASI LOGISTIK PERTANYAAN" di bawah logo terbaca penuh.
-        try:
-            img_real_logo = Image.open("logo.png")
-            st.image(img_real_logo, width=280)
-        except Exception:
-            # Fallback jika file logo rusak/hilang
-            st.markdown("<p style='font-size:35px; margin:0;'>🥦</p>", unsafe_allow_html=True)
+        # MENAMPILKAN LOGO BARU DI TENGAH (Pemberitahuan teks jika file belum ditaruh)
+        st.markdown('<div class="logo-wrapper">', unsafe_allow_html=True)
+        if os.path.exists(NAMA_FILE_LOGO):
+            img_real_logo = Image.open(NAMA_FILE_LOGO)
+            st.image(img_real_logo, width=260)
+        else:
+            st.warning(f"Simpan file logo baru Anda dengan nama '{NAMA_FILE_LOGO}' di folder script ini.")
+        st.markdown('</div>', unsafe_allow_html=True)
         
-        # 2. Judul Teks Tengah
-        st.markdown("<h1 style='text-align: center; color: #000000; font-size: 52px; font-weight: bold; margin-top: 20px; margin-bottom: 0px;'>Log In</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #000000; font-size: 52px; font-weight: bold; margin-top: 0px; margin-bottom: 0px;'>Log In</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; color: #000000; font-size: 15px; font-weight: bold; margin-bottom: 40px;'>Aplikasi Prediksi Kadaluwarsa Produk Hortikultura</p>", unsafe_allow_html=True)
         
-        # 3. Kolom Input Data
         in_user = st.text_input("Username", placeholder="Masukkan username anda", key="log_user")
         in_pass = st.text_input("Password", placeholder="Masukkan password anda", type="password", key="log_pass")
         
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # 4. Tombol Log In Tengah
         col_btn_center_l, col_btn_center_m, col_btn_center_r = st.columns([1, 1.2, 1])
         with col_btn_center_m:
             btn_login_click = st.button("LOG IN", use_container_width=True)
@@ -202,7 +206,6 @@ if st.session_state.halaman == "login":
                 
         st.markdown("<br><br>", unsafe_allow_html=True)
         
-        # 5. Baris Bawah Menu "Have not account?"
         col_text_footer, col_btn_footer = st.columns([1.5, 1])
         with col_text_footer:
             st.markdown("<p style='color: #000000; font-size: 16px; font-weight: 500; text-align: right; margin-top: 5px;'>Have not account?</p>", unsafe_allow_html=True)
@@ -214,7 +217,7 @@ if st.session_state.halaman == "login":
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. HALAMAN INTERFACE: SIGN UP (MENGGUNAKAN LOGO BARU GAMBAR 2)
+# 4. HALAMAN INTERFACE: SIGN UP
 # ==============================================================================
 elif st.session_state.halaman == "signup":
     st.markdown('<div class="bg-circle-top-right"></div>', unsafe_allow_html=True)
@@ -225,14 +228,16 @@ elif st.session_state.halaman == "signup":
     with col_center:
         st.markdown('<div class="login-container">', unsafe_allow_html=True)
         
-        # Penyesuaian Logo Gambar 2 pada halaman registrasi
-        try:
-            img_real_logo = Image.open("logo.png")
-            st.image(img_real_logo, width=280)
-        except Exception:
-            st.markdown("<p style='font-size:35px; margin:0;'>🥦</p>", unsafe_allow_html=True)
+        # MENAMPILKAN LOGO BARU DI TENGAH
+        st.markdown('<div class="logo-wrapper">', unsafe_allow_html=True)
+        if os.path.exists(NAMA_FILE_LOGO):
+            img_real_logo = Image.open(NAMA_FILE_LOGO)
+            st.image(img_real_logo, width=260)
+        else:
+            st.warning(f"Simpan file logo baru Anda dengan nama '{NAMA_FILE_LOGO}' di folder script ini.")
+        st.markdown('</div>', unsafe_allow_html=True)
         
-        st.markdown("<h1 style='text-align: center; color: #000000; font-size: 52px; font-weight: bold; margin-top: 20px; margin-bottom: 0px;'>Sign Up</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #000000; font-size: 52px; font-weight: bold; margin-top: 0px; margin-bottom: 0px;'>Sign Up</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; color: #527a4d; font-size: 15px; font-weight: bold; margin-bottom: 30px;'>Create an account</p>", unsafe_allow_html=True)
         
         reg_email = st.text_input("Email", placeholder="Masukkan email baru", key="reg_e")
