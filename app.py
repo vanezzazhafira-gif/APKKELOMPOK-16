@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 
 # ==============================================================================
-# 1. INISIALISASI DATABASE & LOGIKA SISTEM (TETAP SAMA / TIDAK DIUBAH)
+# 1. INISIALISASI DATABASE & LOGIKA SISTEM (TETAP SAMA / JANGAN DIUBAH)
 # ==============================================================================
 DB_LOGIN_PATH = "manajemen_akses.db"
 DB_ANALISIS_PATH = "logistik_hortikultura.db"
@@ -89,7 +89,7 @@ def cek_kondisi_citra(cv_img, jenis):
     return jenis, status, sisa
 
 # ==============================================================================
-# 2. KONFIGURASI HALAMAN & LAYOUT UTAMA (MENGGUNAKAN LAYOUT CENTRALIZED)
+# 2. SEGMEN LAYOUT CSS - SAMA PERSIS SEPERTI GAMBAR CONTOH NOMOR 1
 # ==============================================================================
 st.set_page_config(page_title="Optimalisasi Logistik Pertanian", layout="wide")
 
@@ -98,53 +98,98 @@ if "halaman" not in st.session_state:
 if "foto_input" not in st.session_state:
     st.session_state.foto_input = None
 
-# CSS Pembersih Latar Belakang & Perapi Gaya Form Kontainer Tengah
+# Injeksi CSS agar ornamen pojok melengkung sempurna tanpa mengganggu objek input utama
 st.markdown("""
 <style>
+    /* Latar belakang putih bersih */
     .stApp {
-        background-color: #f8fafc !important;
+        background-color: #ffffff !important;
     }
     header { visibility: hidden; }
     
-    /* Membuat box kontainer form menjadi putih bersih dan terpusat rapi */
-    .main-form-box {
+    /* Dekorasi Lingkaran Hijau Kanan Atas (Persis Gambar Nomor 1) */
+    .bg-circle-top-right {
+        position: fixed;
+        width: 450px;
+        height: 450px;
+        background-color: #527a4d;
+        border-radius: 50%;
+        top: -180px;
+        right: -120px;
+        z-index: 0;
+    }
+
+    /* Dekorasi Lingkaran Hijau Kiri Bawah (Persis Gambar Nomor 1) */
+    .bg-circle-bottom-left {
+        position: fixed;
+        width: 450px;
+        height: 450px;
+        background-color: #527a4d;
+        border-radius: 50%;
+        bottom: -180px;
+        left: -120px;
+        z-index: 0;
+    }
+
+    /* Pembungkus Konten Utama di Tengah */
+    .login-container {
+        position: relative;
+        z-index: 10;
+        max-width: 460px;
+        margin: 0 auto;
+        padding-top: 10px;
+    }
+    
+    /* Memaksa text box input Streamlit agar serasi */
+    .stTextInput>div>div>input {
         background-color: #ffffff !important;
-        padding: 30px 40px;
-        border-radius: 12px;
-        box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.05);
-        border: 1px solid #e2e8f0;
+        color: #000000 !important;
+        border: 1px solid #cccccc !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 3. HALAMAN INTERFACE: LOG IN
+# 3. HALAMAN INTERFACE: LOG IN (VERSI GAMBAR NOMOR 1)
 # ==============================================================================
 if st.session_state.halaman == "login":
-    # Membuat 3 kolom: Kiri Kosong (3.5), Tengah Konten (5), Kanan Kosong (3.5)
-    # Ini otomatis mengunci Form agar berada tepat di tengah layar browser tanpa melebar memanjang
-    col_kiri, col_tengah, col_kanan = st.columns([3.5, 5, 3.5])
+    # Memasang Background Lingkaran Statis
+    st.markdown('<div class="bg-circle-top-right"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="bg-circle-bottom-left"></div>', unsafe_allow_html=True)
     
-    with col_tengah:
-        st.markdown('<div class="main-form-box">', unsafe_allow_html=True)
+    # Membuka Lajur Kolom Tengah agar Komponen Terkunci di Tengah
+    col_space1, col_center, col_space2 = st.columns([1.2, 1, 1.2])
+    
+    with col_center:
+        st.markdown('<div class="login-container">', unsafe_allow_html=True)
         
-        # MENAMPILKAN KEMBALI LOGO UTAMA SECARA AMAN (Sesuaikan path nama file logo Anda jika berbeda)
-        try:
-            logo_img = Image.open("logo.png") # Ganti "logo.png" sesuai nama file gambar logo di project Anda
-            st.image(logo_img, use_container_width=True)
-        except Exception:
-            # Jika file gambar eksternal tidak ditemukan, sistem menampilkan judul teks fallback agar tidak crash
-            st.markdown("<h3 style='text-align: center; color: #487e47;'>🟢 OPTIMALISASI LOGISTIK PERTANIAN</h3>", unsafe_allow_html=True)
-            
-        st.markdown("<h1 style='text-align: center; color: #1e293b; margin-top: 15px; margin-bottom: 5px; font-weight: 800;'>Log In</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #64748b; font-size: 13px; font-weight: 500; margin-bottom: 25px;'>Aplikasi Prediksi Kadaluwarsa Produk Hortikultura</p>", unsafe_allow_html=True)
+        # 1. Logo Pojok Kiri Atas (Menggunakan kolom mini)
+        col_logo, col_empty = st.columns([1, 2])
+        with col_logo:
+            try:
+                # Membuka file logo asli kamu secara otomatis
+                img_real_logo = Image.open("logo.png")
+                st.image(img_real_logo, use_container_width=True)
+            except Exception:
+                # Fallback tulisan jika file logo tidak sengaja terhapus/belum ditaruh folder
+                st.markdown("<p style='font-size:35px; margin:0;'>🥦</p>", unsafe_allow_html=True)
         
-        in_user = st.text_input("Username / Email", placeholder="Masukkan username anda", key="log_user")
+        # 2. Judul Teks Tengah
+        st.markdown("<h1 style='text-align: center; color: #000000; font-size: 52px; font-weight: bold; margin-top: 5px; margin-bottom: 0px;'>Log In</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #000000; font-size: 15px; font-weight: bold; margin-bottom: 40px;'>Aplikasi Prediksi Kadaluwarsa Produk Hortikultura</p>", unsafe_allow_html=True)
+        
+        # 3. Kolom Input Data
+        in_user = st.text_input("Username", placeholder="Masukkan username anda", key="log_user")
         in_pass = st.text_input("Password", placeholder="Masukkan password anda", type="password", key="log_pass")
         
         st.markdown("<br>", unsafe_allow_html=True)
         
-        if st.button("LOG IN", use_container_width=True, type="primary"):
+        # 4. Tombol Log In Tengah
+        col_btn_center_l, col_btn_center_m, col_btn_center_r = st.columns([1, 1.2, 1])
+        with col_btn_center_m:
+            btn_login_click = st.button("LOG IN", use_container_width=True)
+            
+        if btn_login_click:
             conn = sqlite3.connect(DB_LOGIN_PATH)
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM data_pengguna WHERE email=? AND password=?", (in_user, in_pass))
@@ -157,12 +202,13 @@ if st.session_state.halaman == "login":
             else:
                 st.error("Username atau Password salah!")
                 
-        st.markdown("<div style='margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 15px;'></div>", unsafe_allow_html=True)
+        st.markdown("<br><br>", unsafe_allow_html=True)
         
-        col_text, col_btn = st.columns([1.3, 1])
-        with col_text:
-            st.markdown("<p style='margin-top: 6px; font-size: 14px; color: #475569;'>Have not account?</p>", unsafe_allow_html=True)
-        with col_btn:
+        # 5. Baris Bawah Menu "Have not account?"
+        col_text_footer, col_btn_footer = st.columns([1.5, 1])
+        with col_text_footer:
+            st.markdown("<p style='color: #000000; font-size: 16px; font-weight: 500; text-align: right; margin-top: 5px;'>Have not account?</p>", unsafe_allow_html=True)
+        with col_btn_footer:
             if st.button("Create Account", use_container_width=True, key="btn_to_signup"):
                 st.session_state.halaman = "signup"
                 st.rerun()
@@ -170,22 +216,27 @@ if st.session_state.halaman == "login":
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. HALAMAN INTERFACE: SIGN UP
+# 4. HALAMAN INTERFACE: SIGN UP (MENYESUAIKAN DESAIN NOMOR 1)
 # ==============================================================================
 elif st.session_state.halaman == "signup":
-    col_kiri, col_tengah, col_kanan = st.columns([3.5, 5, 3.5])
+    st.markdown('<div class="bg-circle-top-right"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="bg-circle-bottom-left"></div>', unsafe_allow_html=True)
     
-    with col_tengah:
-        st.markdown('<div class="main-form-box">', unsafe_allow_html=True)
+    col_space1, col_center, col_space2 = st.columns([1.2, 1, 1.2])
+    
+    with col_center:
+        st.markdown('<div class="login-container">', unsafe_allow_html=True)
         
-        try:
-            logo_img = Image.open("logo.png")
-            st.image(logo_img, use_container_width=True)
-        except Exception:
-            st.markdown("<h3 style='text-align: center; color: #487e47;'>🟢 OPTIMALISASI LOGISTIK PERTANIAN</h3>", unsafe_allow_html=True)
-            
-        st.markdown("<h1 style='text-align: center; color: #1e293b; margin-top: 15px; margin-bottom: 5px; font-weight: 800;'>Sign Up</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #487e47; font-size: 14px; font-weight: bold; margin-bottom: 25px;'>Create an account</p>", unsafe_allow_html=True)
+        col_logo, col_empty = st.columns([1, 2])
+        with col_logo:
+            try:
+                img_real_logo = Image.open("logo.png")
+                st.image(img_real_logo, use_container_width=True)
+            except Exception:
+                st.markdown("<p style='font-size:35px; margin:0;'>🥦</p>", unsafe_allow_html=True)
+        
+        st.markdown("<h1 style='text-align: center; color: #000000; font-size: 52px; font-weight: bold; margin-top: 5px; margin-bottom: 0px;'>Sign Up</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #527a4d; font-size: 15px; font-weight: bold; margin-bottom: 30px;'>Create an account</p>", unsafe_allow_html=True)
         
         reg_email = st.text_input("Email", placeholder="Masukkan email baru", key="reg_e")
         reg_pass1 = st.text_input("Password", placeholder="Buat kata sandi", type="password", key="reg_p1")
@@ -193,7 +244,11 @@ elif st.session_state.halaman == "signup":
         
         st.markdown("<br>", unsafe_allow_html=True)
         
-        if st.button("Sign Up", use_container_width=True, type="primary"):
+        col_btn_center_l, col_btn_center_m, col_btn_center_r = st.columns([1, 1.2, 1])
+        with col_btn_center_m:
+            btn_signup_click = st.button("Sign Up", use_container_width=True)
+            
+        if btn_signup_click:
             if reg_pass1 != reg_pass2:
                 st.error("Konfirmasi password tidak cocok!")
             elif reg_email == "" or reg_pass1 == "":
@@ -211,12 +266,12 @@ elif st.session_state.halaman == "signup":
                 except sqlite3.IntegrityError:
                     st.error("Email tersebut sudah terdaftar!")
                     
-        st.markdown("<div style='margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 15px;'></div>", unsafe_allow_html=True)
+        st.markdown("<br><br>", unsafe_allow_html=True)
         
-        col_text2, col_btn2 = st.columns([1.4, 1])
-        with col_text2:
-            st.markdown("<p style='margin-top: 6px; font-size: 14px; color: #475569;'>Already have an account?</p>", unsafe_allow_html=True)
-        with col_btn2:
+        col_text_footer, col_btn_footer = st.columns([1.5, 1])
+        with col_text_footer:
+            st.markdown("<p style='color: #000000; font-size: 16px; font-weight: 500; text-align: right; margin-top: 5px;'>Already have an account?</p>", unsafe_allow_html=True)
+        with col_btn_footer:
             if st.button("Log In", use_container_width=True, key="btn_to_login"):
                 st.session_state.halaman = "login"
                 st.rerun()
@@ -224,7 +279,7 @@ elif st.session_state.halaman == "signup":
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# 5. HALAMAN INTERFACE: DASHBOARD MONITORING (TETAP SAMA / TIDAK DIUBAH)
+# 5. HALAMAN INTERFACE: DASHBOARD UTAMA MONITORING (TETAP AMAN)
 # ==============================================================================
 elif st.session_state.halaman == "dashboard":
     st.markdown("""
