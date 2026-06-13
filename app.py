@@ -41,7 +41,7 @@ class LoginWindow(QtWidgets.QMainWindow):
         if not pixmap_logo.isNull():
             self.label_logo.setPixmap(pixmap_logo)
         else:
-            # Jika file gambar tidak ditemukan, tampilkan placeholder teks hijau teks alternatif
+            # Jika file gambar tidak ditemukan, tampilkan placeholder teks alternatif
             self.label_logo.setText("LOGO")
             self.label_logo.setStyleSheet("color: #2e7d32; font-weight: bold; font-size: 24px;")
             self.label_logo.setAlignment(QtCore.Qt.AlignCenter)
@@ -432,15 +432,22 @@ class AppLogistik:
 
 
 # ==============================================================================
-# 3. ALUR UTAMA EXECUTION
+# 3. ALUR UTAMA EXECUTION (PENGAMAN LOOP AMAN)
 # ==============================================================================
-if __name__ == "__main__":
+def jalankan_login_pyqt():
+    global LOGIN_SUCCESS
+    # Inisialisasi PyQt5 di dalam fungsi agar siklusnya bersih saat ditutup
     qt_app = QtWidgets.QApplication(sys.argv)
     login_window = LoginWindow()
     login_window.show()
-    qt_app.exec_()
+    qt_app.exec_() # Loop PyQt5
 
-    # Jika login sukses di PyQt5, beralih ke Dashboard Utama Tkinter
+
+if __name__ == "__main__":
+    # 1. Jalankan antarmuka Login PyQt5 terlebih dahulu
+    jalankan_login_pyqt()
+
+    # 2. Jika login sukses dan PyQt5 selesai, buka Dashboard Tkinter secara mandiri
     if LOGIN_SUCCESS:
         root = tk.Tk()
         app_dashboard = AppLogistik(root)
