@@ -102,7 +102,10 @@ def cek_kondisi_roi(path_gambar, jenis):
     if img is None:
         return "Error", "Gagal load gambar", -1
 
-    hsv = cv2.cvtColor(cv2.GaussianBlur(img, (5, 5), 0), cv2.COLOR_BGR2HSV)
+    h_orig, w_orig, _ = img.shape
+    img_roi = img[0:h_orig, 0:w_orig]
+
+    hsv = cv2.cvtColor(cv2.GaussianBlur(img_roi, (5, 5), 0), cv2.COLOR_BGR2HSV)
 
     mask_orange = cv2.inRange(hsv, np.array([4, 65, 45]), np.array([22, 255, 255]))
     mask_red = cv2.bitwise_or(
@@ -111,10 +114,10 @@ def cek_kondisi_roi(path_gambar, jenis):
     )
     mask_green = cv2.inRange(hsv, np.array([35, 45, 35]), np.array([85, 255, 255]))
 
-    total_pixels = img.shape[0] * img.shape[1]
-    pct_orange = cv2.countNonZero(mask_orange) / total_pixels * 100
-    pct_red = cv2.countNonZero(mask_red) / total_pixels * 100
-    pct_green = cv2.countNonZero(mask_green) / total_pixels * 100
+    total_roi = img_roi.shape[0] * img_roi.shape[1]
+    pct_orange = cv2.countNonZero(mask_orange) / total_roi * 100
+    pct_red = cv2.countNonZero(mask_red) / total_roi * 100
+    pct_green = cv2.countNonZero(mask_green) / total_roi * 100
 
     if max(pct_orange, pct_red, pct_green) < 5:
         return "Error", "Objek bukan sayuran yang dikenali.", -1
@@ -193,7 +196,7 @@ if "riwayat_session" not in st.session_state:
 
 
 # =========================================================
-# CSS
+# CSS (DESAIN ASLI DIMANTAPKAN AGAR INPUT KAMERA JADI RAPI)
 # =========================================================
 st.markdown("""
 <style>
@@ -259,7 +262,7 @@ header[data-testid="stHeader"] {display:none;}
     color:black;
 }
 
-/* DASHBOARD STYLE - dibuat mengikuti tampilan Qt Designer */
+/* DASHBOARD STYLE */
 .dashboard-shell {
     width:1120px;
     min-height:660px;
@@ -349,7 +352,7 @@ header[data-testid="stHeader"] {display:none;}
 
 .button-stack {
     margin-left:12px;
-    margin-top:80px;
+    margin-top:15px; /* Disesuaikan agar pas dengan penempatan komponen input baru */
     width:400px;
 }
 
@@ -358,12 +361,12 @@ header[data-testid="stHeader"] {display:none;}
 .purple-btn div.stButton > button,
 .green-btn div.stButton > button {
     width:400px;
-    height:58px;
+    height:45px;
     border-radius:0px;
     color:white;
     font-weight:700;
     border:none;
-    margin-bottom:25px;
+    margin-bottom:4px;
 }
 
 .blue-btn div.stButton > button {background:#1976d2;}
@@ -396,7 +399,6 @@ header[data-testid="stHeader"] {display:none;}
     margin-top:0px;
 }
 
-/* agar komponen asli streamlit tidak merusak jarak */
 div[data-testid="stSelectbox"] {
     margin-top:0px;
     margin-bottom:0px;
@@ -406,8 +408,11 @@ div[data-testid="stSelectbox"] div {
     color:black;
 }
 
-div[data-testid="stFileUploader"] {
-    display:none;
+/* Kustomisasi kontainer input fungsional agar rapi dan muat di panel scanner */
+div[data-testid="stFileUploader"], div[data-testid="stCameraInput"] {
+    margin-left: 12px;
+    width: 400px;
+    margin-bottom: 10px;
 }
 
 [data-testid="stDataFrame"] {
@@ -420,7 +425,7 @@ div[data-testid="stFileUploader"] {
     border-radius:0px;
     background:#555;
     color:white;
-    margin-top:-10px;
+    margin-top:5px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -575,14 +580,24 @@ else:
     komoditas = st.selectbox("", ["Wortel", "Cabai", "Brokoli"], label_visibility="collapsed")
     st.markdown('</div>', unsafe_allow_html=True)
 
+    # 📌 DUA INPUT FUNGSIONAL ASLI: Kamera & File Uploader (Akan menangkap gambar asli di HP)
     uploaded_file = st.file_uploader(
-        "Pilih Foto dari Galeri",
+        "Upload dari Galeri",
         type=["jpg", "jpeg", "png"],
-        label_visibility="collapsed"
+        label_visibility="visible"
+    )
+    
+    camera_file = st.camera_input(
+        "Ambil Foto dari Kamera HP", 
+        label_visibility="visible"
     )
 
-    if uploaded_file:
-        image = Image.open(uploaded_file)
+    # Menentukan file mana yang sedang aktif dipakai oleh user
+    active_image_file = camera_file if camera_file is not None else uploaded_file
+
+    # Manajemen Preview Panel kustom agar menampilkan gambar yang aktif
+    if active_image_file:
+        image = Image.open(active_image_file)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as preview_tmp:
             image.convert("RGB").save(preview_tmp.name)
         img64 = file_to_base64(preview_tmp.name)
@@ -593,6 +608,7 @@ else:
     else:
         st.markdown('<div class="preview-panel">[ Preview ]</div>', unsafe_allow_html=True)
 
+    # 📌 STRUKTUR TOMBOL ASLI DESAIN KAMU (TETAP UTUH TANPA PERUBAHAN)
     st.markdown('<div class="button-stack">', unsafe_allow_html=True)
 
     st.markdown('<div class="blue-btn">', unsafe_allow_html=True)
@@ -627,17 +643,18 @@ else:
         st.session_state.riwayat_session = []
         st.rerun()
 
+    # Eksekusi logika analisis OpenCV berdasarkan file gambar yang aktif
     if analisis:
-        if uploaded_file is None:
+        if active_image_file is None:
             st.session_state.hasil = {
                 "komoditas": "Error",
-                "kondisi": "Pilih foto dulu",
+                "kondisi": "Ambil kamera atau pilih foto dulu",
                 "sisa": "-",
                 "suhu": "-"
             }
         else:
             with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
-                tmp.write(uploaded_file.getbuffer())
+                tmp.write(active_image_file.getbuffer())
                 path = tmp.name
 
             nama, kondisi, sisa = cek_kondisi_roi(path, komoditas)
@@ -664,8 +681,8 @@ else:
                 cur = conn.cursor()
                 cur.execute(
                     """
-                    INSERT INTO riwayat_pindai
-                    (komoditas,kondisi,sisa_segar,suhu_simpan)
+                    INSERT INTO riwayat_pindai 
+                    (komoditas,kondisi,sisa_segar,suhu_simpan) 
                     VALUES (?,?,?,?)
                     """,
                     (nama, kondisi, sisa_hari, suhu)
