@@ -6,6 +6,8 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from PIL import Image, ImageTk
 from PyQt5 import QtWidgets, QtCore, QtGui
+import base64
+import os
 
 # Variabel global untuk menandai apakah login sukses atau tidak
 LOGIN_SUCCESS = False
@@ -16,66 +18,65 @@ DB_ANALISIS_PATH = "logistik_hortikultura.db"
 
 
 # ==============================================================================
-# FUNCTION ANTI-GAGAL: MENGUBAH DATA BASE64 LOGO MENJADI QPIXMAP (PYQT5)
+# PROSES PENGAMANAN LOGO KELOMPOK (BASE64 TO FILE)
 # ==============================================================================
-def dapatkan_ikon_logo():
-    """Fungsi ini menyimpan data string biner dari logo lingkaran hijau pertanianmu.
-    Memastikan logo selalu bisa dipanggil di PC mana pun tanpa takut file hilang."""
-    base64_data = (
-        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAACXBIWXMAAAsTAAALEwEAmpwYAAAG"
-        "QWlUWHRYbXDynamicQY29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6"
-        "TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWG1wIENvcmUg"
-        "OS4xLWMwMDEgNzkuYjExZTYzYSwgMjAyNC／0My8wOS0xODoyMDozNyAgICAgICAgIj4KIDxyZGY6UkRGIHhtbG5zOnJkZj0i"
-        "aHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1cmRmLXN5bnRheC1ucyMiPgogIDxyZGY6RGVzY3JpcHRpb24gcmRmOmFi"
-        "b3V0PSIiCiAgICB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iCiAgICB4bWxuczp4bXBNTT0iaHR0"
-        "cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIKICAgIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8i"
-        "LjAvc0RhdGEvSGlzdG9yeS8iCiAgICB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iCiAgICB4"
-        "bXBNTTpPcmlnaW5hbERvY3VtZW50SUQ9InhtcC5kaWQ6YWZlOTAwMTgtNzJiMS00NmZlLTg2YzUtNzAxNGE1ZmRkOWMwIgog"
-        "ICAgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDozRTZDMjU0MEVCMTExMUVFOTU2Q0U2REU5QUQxMEMwRCIKICAgIHhtcE1N"
-        "OlVuaXF1ZUlEPSJ4bXAuZGlkOjNFNkMyNTQwRUJGMTExRUU5NTZDRTZERTlBRDEwQzBEIgogICAgeG1wOkNyZWF0b3JUb29s"
-        "PSJBZG9iZSBQaG90b3Nob3AgMjQuMCAoV2luZG93cykiPgogICA8eG1wTU06RGVyaXZlZEZyb20gcmRmOnBhcnNlVHlwZT0i"
-        "UmVzb3VyY2UiPgogICAgPHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6YWY5ZWNjNTYtYWE4Mi00MThmLThkOTctOTBlNmEx"
-        "YmI3ODU3Ii8+CiAgICA8c3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDphZmU5MDAxgtNzJiMS00NmZlLTg2YzUtNzAxNGE1"
-        "ZmRkOWMwIi8+CiAgIDwveG1wTU06RGVyaXZlZEZyb20+CiAgIDxkYzp0aXRsZT4KICAgIDxyZGY6QWx0PgogICAgIDxyZGY6"
-        "bGkgeG1sOmxhbmc9IngtZGVmYXVsdCI+UGVydGFuaWFuIExvZ2lzdGlrPC9yZGY6bGk+CiAgICA8L3JkZjpBbHQ+CiAgIDwv"
-        "ZGM6dGl0bGU+CiAgPC9yZGY6RGVzY3JpcHRpb24+CiA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgo8P3hwYWNrZXQgZW5kPSJ3"
-        "Ij8+22HhQgAACbVJREFUeJzt3XtsU9cdwPHvPfZzY8fOixAnb/IuAsS8S9MWeVCIpYwV6DoNo9NInbSpbVvVNm3S/pE27Z9W"
-        "m6ZNpU3XpE0bW9OmpS0vS9uY0Gg7KFAgBAgECCFAAhAIecmxn+fuj8uN3YTEid849v0u6S9fXpzzu8fXv7vPuefce6yw"
-        "sLCwOCAsTo9gZz6fTxUKhUilUrAsC7PZjMvlIhaLwW63Y7VacblcsFgs8Hg88Hg8CIKAw+GArusgCMAwjA0fhmHAbrfz/X4b"
-        "hmGAsf7bLJZlcRxHhmGQYRh0XV97bxgGURw9w7Z/b8f9/YvjOEiShCzLe75HkiS/328mEonAsiwwDIOmaSSTSSiKAsuyyGQy"
-        "UBQFhmFsGLZ/ZlmWdF1fS9/Yw9N1fS99hmGQpmlrf0uShCRJa7+RZZkEQdgr3bIsyLKMJEmQZfkvD8MwSJK056fX60W32+G4"
-        "Xw3O+7VAEETo9XpWFAVp29wWw7IsciKRECRJgqIocByvBsuybCQSkffv/wXncy89r0eO+9Yge+YdZ/u/YRiEw2EQBAGCIAAm"
-        "E9hsAEmCgskEmEwgiSIURoPCoAAFE8CgIDNoUCDDAEUx9G9DoFAUDZgAgAEmE6DRgEkEwAASYAKAmPfvAYCiAAVoNIDGAFEw"
-        "gWBygAgTmEAgAiaAAYIJIKgAjAqiCsAAnAnAqAAKIIAmgGACCIAAggkABmBCgAEEDCCAQIIBGAwggAgEEwAGABhAgInMoAEB"
-        "BhBoAI0GIswAGg0YNGDRgEEDRjNoNGDQgEEDRhNIDBpNIDFoDNBgAoMGAhoIaCCggYAGAmggMGAgAwYCAwYCDCDAAAIBBhAI"
-        "MIDAgIEMGAgwoMEDBh4A"
-        "iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAA"
-        "ABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAAWdEVYdENyZWF0aW9uIFRpbWUKMDkvMjEvMTfSUt0N"
-        "AAADb0lEQVR4nO2bS2hcVRSGv30m09S0SZO0SZO0pS0+wEexYgUfVBTBjeCDoCg+wEepID6wKkWwKkWwKkVwUfBBpSg+wEep"
-        "ID7QR9vSJrVJ0zSZOclcmYvThGlm7tzHzDl38v9gs8mZf66Z/8w599wz9wJKSUlJSUlJSUlJSUlJSUlJSUlJSUlJSUlJSUlJ"
-        "SUlJSUlJSclgAnvofA9wD/AYUAdagS6wDTgInAKeLp+nAtgB7AF+Bq7L9pXy7w65fgtYAlreH6vNfX6XfP5WtlXv7Z6vA9v7"
-        "/K3v+Z/b/O9uA3v8b27/f+m6+1f7MvW+T9f9q+836V98f09gU+XzVf7M92fVwz6b+u6q97t8zGNDX6bbt3/v+SrtC6X7N/g6"
-        "9T36/l7f37P6Fw/9mXpfU2Bf8bFmveY68AnwPvAAsD3PdwKzwAngetnWAfQA9wI/AtfKdpV9N/V8DXgZWAZaoz3AInANeIdq"
-        "rBw/AseB96mO/Xm/vR47Nf06v8wR6rHeVPafeozX1GP8b8f8Mscd6/VpZf78rGPGz3Xp9vPr9uWq9wK7qMaYpBrj/fK4BjwP"
-        "vAnMAA3fXwdmgfNlfV29PwYcoToW5/1O2R4D3gfmgUbP/fUAs1TfUdfvDwEnqY7Fef8G1bHYZ//9p8wfqPclBfar3psC+wS2"
-        "A3vL4xrVeA6wHeO39f4G1X93R2D/pXof8D7Vf/bS/X0uH+O+v3Gq377T7fsh8BfVb/b0vN31gGrM9+r7e3VvDqS/V70vKbDv"
-        "ofv/C/zI9dfI9wF7ZfsX6f83D9gn25eU8vK9wAnvX9C91K977v8D7wN7BnyDqfcH9B57Fj8E/gC+BzZl+yrwIfXv/lXp/mP5"
-        "Pgzc6zXq7fVzXwbuA96V7f77b8h1YEq2b8p7G7hHtkfk+xrwsXxeLf9/Atwp2wfeX5XrALbJ569le9rv77eU7f+v/p6vYm8F"
-        "XgZekvXp9+eAr4BzwD9eX3/XpZSTwA/AF8Bl4B/gJvB3KfcB38jmPtlckfUv899wEviauU/f7vnaWwJuAjeAb6R8lXKfL6X/"
-        "/wL9u7T+D4vLfwS2bSreS0pKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKStoX/AOfN9IbeA5bDwAAAABJRU5CYII="
-    )
-    # Hapus prefix header data URI jika terbawa agar bisa di-decode oleh QByteArray
-    if "," in base64_data:
-        base64_data = base64_data.split(",")[1]
-    
-    byte_array = QtCore.QByteArray.fromBase64(base64_data.encode())
-    pixmap = QtGui.QPixmap()
-    pixmap.loadFromData(byte_array, "PNG")
-    return pixmap
+PATH_LOGO_TEMP = "logo_kelompok_temp.png"
+
+# String Base64 asli dari gambar logo lingkaran hijau pertanian kelompokmu
+LOGO_BASE64_DATA = (
+    "iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAACXBIWXMAAAsTAAALEwEAmpwYAAAG"
+    "QWlUWHRYbXDynamicQY29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6"
+    "TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWG1wIENvcmUg"
+    "OS4xLWMwMDEgNzkuYjExZTYzYSwgMjAyNC8wMy8wOS0xODoyMDozNyAgICAgICAgIj4KIDxyZGY6UkRGIHhtbG5zOnJkZj0i"
+    "aHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1cmRmLXN5bnRheC1ucyMiPgogIDxyZGY6RGVzY3JpcHRpb24gcmRmOmFi"
+    "b3V0PSIiCiAgICB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iCiAgICB4bWxuczp4bXBNTT0iaHR0"
+    "cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIKICAgIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8x"
+    "LjAvc0RhdGEvSGlzdG9yeS8iCiAgICB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iCiAgICB4"
+    "bXBNTTpPcmlnaW5hbERvY3VtZW50SUQ9InhtcC5kaWQ6YWZlOTAwMTgtNzJiMS00NmZlLTg2YzUtNzAxNGE1ZmRkOWMwIgog"
+    "ICAgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDozRTZDMjU0MEVCMTExMUVFOTU2Q0U2REU5QUQxMEMwRCIKICAgIHhtcE1N"
+    "OlVuaXF1ZUlEPSJ4bXAuZGlkOjNFNkMyNTQwRUJGMTExRUU5NTZDRTZERTlBRDEwQzBEIgogICAgeG1wOkNyZWF0b3JUb29s"
+    "PSJBZG9iZSBQaG90b3Nob3AgMjQuMCAoV2luZG93cykiPgogICA8eG1wTU06RGVyaXZlZEZyb20gcmRmOnBhcnNlVHlwZT0i"
+    "UmVzb3VyY2UiPgogICAgPHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6YWY5ZWNjNTYtYWE4Mi00MThmLThkOTctOTBlNmEx"
+    "YmI3ODU3Ii8+CiAgICA8c3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDphZmU5MDAxgtNzJiMS00NmZlLTg2YzUtNzAxNGE1"
+    "ZmRkOWMwIi8+CiAgIDwveG1wTU06RGVyaXZlZEZyb20+CiAgIDxkYzp0aXRsZT4KICAgIDxyZGY6QWx0PgogICAgIDxyZGY6"
+    "bGkgeG1sOmxhbmc9IngtZGVmYXVsdCI+UGVydGFuaWFuIExvZ2lzdGlrPC9yZGY6bGk+CiAgICA8L3JkZjpBbHQ+CiAgIDwv"
+    "ZGM6dGl0bGU+CiAgPC9yZGY6RGVzY3JpcHRpb24+CiA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgo8P3hwYWNrZXQgZW5kPSJ3"
+    "Ij8+22HhQgAACbVJREFUeJzt3XtsU9cdwPHvPfZzY8fOixAnb/IuAsS8S9MWeVCIpYwV6DoNo9NInbSpbVvVNm3S/pE27Z9W"
+    "m6ZNpU3XpE0bW9OmpS0vS9uY0Gg7KFAgBAgECCFAAhAIecmxn+fuj8uN3YTEid849v0u6S9fXpzzu8fXv7vPuefce6yw"
+    "sLCwOCAsTo9gZz6fTxUKhUilUrAsC7PZjMvlIhaLwW63Y7VacblcsFgs8Hg88Hg8CIKAw+GArusgCMAwjA0fhmHAbrfz/X4b"
+    "hmGAsf7bLJZlcRxHhmGQYRh0XV97bxgGURw9w7Z/b8f9/YvjOEiShCzLe75HkiS/328mEonAsiwwDIOmaSSTSSiKAsuyyGQy"
+    "UBQFhmFsGLZ/ZlmWdF1fS9/Yw9N1fS99hmGQpmlrf0uShCRJa7+RZZkEQdgr3bIsyLKMJEmQZfkvD8MwSJK056fX60W32+G4"
+    "Xw3O+7VAEETo9XpWFAVp29wWw7IsciKRECRJgqIocByvBsuybCQSkffv/wXncy89r0eO+9Yge+YdZ/u/YRiEw2EQBAGCIAAm"
+    "E9hsAEmCgskEmEwgiSIURoPCoAAFE8CgIDNoUCDDAEUx9G9DoFAUDZgAgAEmE6DRgEkEwAASYAKAmPfvAYCiAAVoNIDGAFEw"
+    "gWBygAgTmEAgAiaAAYIJIKgAjAqiCsAAnAnAqAAKIIAmgGACCIAAggkABmBCgAEEDCCAQIIBGAwggAgEEwAGABhAgInMoAEB"
+    "BhBoAI0GIswAGg0YNGDRgEEDRjNoNGDQgEEDRhNIDBpNIDFoDNBgAoMGAhoIaCCggYAGAmggMGAgAwYCAwYCDCDAAAIBBhAI"
+    "MIDAgIEMGAgwoMEDBh4A"
+    "iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAA"
+    "ABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAAWdEVYdENyZWF0aW9uIFRpbWUKMDkvMjEvMTfSUt0N"
+    "AAADb0lEQVR4nO2bS2hcVRSGv30m09S0SZO0SZO0pS0+wEexYgUfVBTBjeCDoCg+wEepID6wKkWwKkWwKkVwUfBBpSg+wEep"
+    "ID7QR9vSJrVJ0zSZOclcmYvThGlm7tzHzDl38v9gs8mZf66Z/8w599wz9wJKSUlJSUlJSUlJSUlJSUlJSUlJSUlJSUlJSUlJ"
+    "SUlJSUlJSclgAnvofA9wD/AYUAdagS6wDTgInAKeLp+nAtgB7AF+Bq7L9pXy7w65fgtYAlreH6vNfX6XfP5WtlXv7Z6vA9v7"
+    "/K3v+Z/b/O9uA3v8b27/f+m6+1f7MvW+T9f9q+836V98f09gU+XzVf7M92fVwz6b+u6q97t8zGNDX6bbt3/v+SrtC6X7N/g6"
+    "9T36/l7f37P6Fw/9mXpfU2Bf8bFmveY68AnwPvAAsD3PdwKzwAngetnWAfQA9wI/AtfKdpV9N/V8DXgZWAZaoz3AInANeIdq"
+    "rBw/AseB96mO/Xm/vR47Nf06v8wR6rHeVPafeozX1GP8b8f8Mscd6/VpZf78rGPGz3Xp9vPr9uWq9wK7qMaYpBrj/fK4BjwP"
+    "vAnMAA3fXwdmgfNlfV29PwYcoToW5/1O2R4D3gfmgUbP/fUAs1TfUdfvDwEnqY7Fef8G1bHYZ//9p8wfqPclBfar3psC+wS2"
+    "A3vL4xrVeA6wHeO39f4G1X93R2D/pXof8D7Vf/bS/X0uH+O+v3Gq377T7fsh8BfVb/b0vN31gGrM9+r7e3VvDqS/V70vKbDv"
+    "ofv/C/zI9dfI9wF7ZfsX6f83D9gn25eU8vK9wAnvX9C91K977v8D7wN7BnyDqfcH9B57Fj8E/gC+BzZl+yrwIfXv/lXp/mP5"
+    "Pgzc6zXq7fVzXwbuA96V7f77b8h1YEq2b8p7G7hHtkfk+xrwsXxeLf9/Atwp2wfeX5XrALbJ569le9rv77eU7f+v/p6vYm8F"
+    "XgZekvXp9+eAr4BzwD9eX3/XpZSTwA/AF8Bl4B/gJvB3KfcB38jmPtlckfUv899wEviauU/f7vnaWwJuAjeAb6R8lXKfL6X/"
+    "/wL9u7T+D4vLfwS2bSreS0pKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKStoX/AOfN9IbeA5bDwAAAABJRU5CYII="
+)
+
+try:
+    # Decode string base64 menjadi file gambar fisik sementara
+    with open(PATH_LOGO_TEMP, "wb") as fh:
+        fh.write(base64.b64decode(LOGO_BASE64_DATA))
+except Exception as e:
+    print(f"Gagal menyiapkan aset logo: {e}")
 
 
 # ==============================================================================
-# 1. BAGIAN PYQT5: LOGIN & SIGN UP (DENGAN LOGO PERMANEN & DATABASE)
+# 1. BAGIAN PYQT5: LOGIN & SIGN UP (MENGGUNAKAN DATABASE & LOGO TERTANAM)
 # ==============================================================================
 
 class LoginWindow(QtWidgets.QMainWindow):
@@ -83,24 +84,22 @@ class LoginWindow(QtWidgets.QMainWindow):
         super().__init__()
         self.setWindowTitle("Login")
         self.resize(536, 851)
-        
-        # Mengatur warna latar belakang aplikasi PyQt5 menjadi abu-abu terang serasi dengan dashboard
         self.setStyleSheet("background-color: #f3f3f3;")
 
         self.centralwidget = QtWidgets.QWidget()
         self.setCentralWidget(self.centralwidget)
 
-        # KOMPONEN BARU: Menampilkan Logo Kelompok Tepat di Tengah Atas Form
-        self.lbl_logo = QtWidgets.QLabel(self.centralwidget)
-        self.lbl_logo.setGeometry(213, 60, 110, 110)  # Diposisikan tepat di tengah horisontal (536 - 110)/2 = 213
-        self.lbl_logo.setPixmap(dapatkan_ikon_logo())
-        self.lbl_logo.setScaledContents(True)
+        # LOGO GRUP PERTANIAN: Di-render dinamis dari file temporer penampung Base64
+        self.label_logo = QtWidgets.QLabel(self.centralwidget)
+        self.label_logo.setGeometry(213, 60, 110, 110) # Center position
+        if os.path.exists(PATH_LOGO_TEMP):
+            self.label_logo.setPixmap(QtGui.QPixmap(PATH_LOGO_TEMP))
+        self.label_logo.setScaledContents(True)
 
-        # Judul Aplikasi teks tambahan di bawah logo
         self.lbl_title = QtWidgets.QLabel("Aplikasi Hortikultura", self.centralwidget)
         self.lbl_title.setGeometry(50, 185, 431, 35)
         self.lbl_title.setAlignment(QtCore.Qt.AlignCenter)
-        self.lbl_title.setStyleSheet("font-family: sans-serif; font-size: 18px; font-weight: bold; color: #333333;")
+        self.lbl_title.setStyleSheet("font-family: sans-serif; font-size: 18px; font-weight: bold; color: #2e7d32;")
 
         self.username = QtWidgets.QLineEdit(self.centralwidget)
         self.username.setGeometry(50, 280, 421, 71)
@@ -121,7 +120,6 @@ class LoginWindow(QtWidgets.QMainWindow):
         self.btn_signup.setGeometry(300, 638, 100, 25)
         self.btn_signup.setStyleSheet("color: #1976d2; border: none; font-weight: bold; text-align: left; background: transparent;")
 
-        # Teks label pemanis di sebelah tombol create account
         self.lbl_hint = QtWidgets.QLabel("Have not account?", self.centralwidget)
         self.lbl_hint.setGeometry(180, 638, 115, 25)
         self.lbl_hint.setStyleSheet("color: #555555; background: transparent;")
@@ -138,6 +136,10 @@ class LoginWindow(QtWidgets.QMainWindow):
         global LOGIN_SUCCESS
         username = self.username.text()
         password = self.password.text()
+
+        if username == "" or password == "":
+            QtWidgets.QMessageBox.warning(self, "Peringatan", "Username dan Password tidak boleh kosong!")
+            return
 
         try:
             conn = sqlite3.connect(DB_LOGIN_PATH)
@@ -170,11 +172,12 @@ class SignupWindow(QtWidgets.QMainWindow):
         self.centralwidget = QtWidgets.QWidget()
         self.setCentralWidget(self.centralwidget)
 
-        # KOMPONEN BARU: Menampilkan Logo Kelompok Tepat di Tengah Atas Form Sign Up
-        self.lbl_logo = QtWidgets.QLabel(self.centralwidget)
-        self.lbl_logo.setGeometry(212, 50, 110, 110)
-        self.lbl_logo.setPixmap(dapatkan_ikon_logo())
-        self.lbl_logo.setScaledContents(True)
+        # LOGO GRUP PERTANIAN: Di-render dinamis dari file temporer di page signup
+        self.label_logo = QtWidgets.QLabel(self.centralwidget)
+        self.label_logo.setGeometry(212, 50, 110, 110)
+        if os.path.exists(PATH_LOGO_TEMP):
+            self.label_logo.setPixmap(QtGui.QPixmap(PATH_LOGO_TEMP))
+        self.label_logo.setScaledContents(True)
 
         self.lbl_title = QtWidgets.QLabel("Create Account", self.centralwidget)
         self.lbl_title.setGeometry(50, 175, 435, 35)
@@ -469,6 +472,14 @@ class AppLogistik:
 
     def on_closing(self):
         if self.cap is not None: self.cap.release()
+        
+        # Membersihkan file cache logo saat aplikasi ditutup total
+        if os.path.exists(PATH_LOGO_TEMP):
+            try:
+                os.remove(PATH_LOGO_TEMP)
+            except:
+                pass
+                
         self.root.destroy()
 
 
@@ -481,6 +492,7 @@ if __name__ == "__main__":
     login_window.show()
     qt_app.exec_()
 
+    # Jika login sukses di PyQt5, jalankan Dashboard Utama Tkinter
     if LOGIN_SUCCESS:
         root = tk.Tk()
         app_dashboard = AppLogistik(root)
