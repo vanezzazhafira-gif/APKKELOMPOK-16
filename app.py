@@ -89,7 +89,7 @@ def cek_kondisi_citra(cv_img, jenis):
     return jenis, status, sisa
 
 # ==============================================================================
-# 2. KONFIGURASI HALAMAN & CSS BARU (ANTI-BENTROK / BERSIH)
+# 2. KONFIGURASI HALAMAN & LAYOUT UTAMA (MENGGUNAKAN LAYOUT CENTRALIZED)
 # ==============================================================================
 st.set_page_config(page_title="Optimalisasi Logistik Pertanian", layout="wide")
 
@@ -98,62 +98,21 @@ if "halaman" not in st.session_state:
 if "foto_input" not in st.session_state:
     st.session_state.foto_input = None
 
-# CSS Baru yang memisahkan layer lingkaran agar berada di paling latar belakang (z-index: 1)
+# CSS Pembersih Latar Belakang & Perapi Gaya Form Kontainer Tengah
 st.markdown("""
 <style>
-    /* Latar belakang utama aplikasi */
     .stApp {
-        background-color: #f3f4f6 !important;
+        background-color: #f8fafc !important;
     }
-    
     header { visibility: hidden; }
     
-    /* Box Putih Utama Utama */
-    .app-window {
+    /* Membuat box kontainer form menjadi putih bersih dan terpusat rapi */
+    .main-form-box {
         background-color: #ffffff !important;
-        padding: 35px;
-        border-radius: 16px;
-        box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.08);
-        max-width: 440px;
-        margin: 40px auto;
-        position: relative;
-        overflow: hidden;
-        border: 1px solid #e5e7eb;
-    }
-
-    /* Lingkaran Hijau Kanan Atas */
-    .circle-top {
-        position: absolute;
-        width: 180px;
-        height: 180px;
-        background-color: #487e47;
-        border-radius: 50%;
-        top: -70px;
-        right: -60px;
-        z-index: 1;
-    }
-
-    /* Lingkaran Hijau Kiri Bawah */
-    .circle-bottom {
-        position: absolute;
-        width: 180px;
-        height: 180px;
-        background-color: #487e47;
-        border-radius: 50%;
-        bottom: -70px;
-        left: -60px;
-        z-index: 1;
-    }
-
-    /* Konten Form (Wajib z-index 2 agar selalu di atas lingkaran) */
-    .form-safe-content {
-        position: relative;
-        z-index: 2;
-    }
-    
-    /* Memaksa teks label input berwarna gelap terang */
-    .form-safe-content label, .form-safe-content p {
-        color: #1f2937 !important;
+        padding: 30px 40px;
+        border-radius: 12px;
+        box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -162,98 +121,110 @@ st.markdown("""
 # 3. HALAMAN INTERFACE: LOG IN
 # ==============================================================================
 if st.session_state.halaman == "login":
-    # Membuat susunan komponen HTML berlapis secara aman
-    st.markdown('<div class="app-window">', unsafe_allow_html=True)
-    st.markdown('<div class="circle-top"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="circle-bottom"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="form-safe-content">', unsafe_allow_html=True)
+    # Membuat 3 kolom: Kiri Kosong (3.5), Tengah Konten (5), Kanan Kosong (3.5)
+    # Ini otomatis mengunci Form agar berada tepat di tengah layar browser tanpa melebar memanjang
+    col_kiri, col_tengah, col_kanan = st.columns([3.5, 5, 3.5])
     
-    # Konten Form Login
-    st.markdown("<h1 style='text-align: center; color: #111111; margin-top: 10px; margin-bottom: 5px; font-weight: 800;'>Log In</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #4b5563; font-size: 13px; font-weight: 500; margin-bottom: 30px;'>Aplikasi Prediksi Kadaluwarsa Produk Hortikultura</p>", unsafe_allow_html=True)
-    
-    in_user = st.text_input("Username", placeholder="Masukkan username anda", key="log_user")
-    in_pass = st.text_input("Password", placeholder="Masukkan password anda", type="password", key="log_pass")
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    if st.button("LOG IN", use_container_width=True):
-        conn = sqlite3.connect(DB_LOGIN_PATH)
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM data_pengguna WHERE email=? AND password=?", (in_user, in_pass))
-        user_found = cursor.fetchone()
-        conn.close()
+    with col_tengah:
+        st.markdown('<div class="main-form-box">', unsafe_allow_html=True)
         
-        if user_found:
-            st.session_state.halaman = "dashboard"
-            st.rerun()
-        else:
-            st.error("Username atau Password salah!")
+        # MENAMPILKAN KEMBALI LOGO UTAMA SECARA AMAN (Sesuaikan path nama file logo Anda jika berbeda)
+        try:
+            logo_img = Image.open("logo.png") # Ganti "logo.png" sesuai nama file gambar logo di project Anda
+            st.image(logo_img, use_container_width=True)
+        except Exception:
+            # Jika file gambar eksternal tidak ditemukan, sistem menampilkan judul teks fallback agar tidak crash
+            st.markdown("<h3 style='text-align: center; color: #487e47;'>🟢 OPTIMALISASI LOGISTIK PERTANIAN</h3>", unsafe_allow_html=True)
             
-    st.markdown("<div style='margin-top: 25px; border-top: 1px solid #e5e7eb; padding-top: 15px;'></div>", unsafe_allow_html=True)
-    
-    col_t1, col_b1 = st.columns([1.3, 1])
-    with col_t1:
-        st.markdown("<p style='margin-top: 6px; font-size: 14px;'>Have not account?</p>", unsafe_allow_html=True)
-    with col_b1:
-        if st.button("Create Account", use_container_width=True, key="btn_to_signup"):
-            st.session_state.halaman = "signup"
-            st.rerun()
+        st.markdown("<h1 style='text-align: center; color: #1e293b; margin-top: 15px; margin-bottom: 5px; font-weight: 800;'>Log In</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #64748b; font-size: 13px; font-weight: 500; margin-bottom: 25px;'>Aplikasi Prediksi Kadaluwarsa Produk Hortikultura</p>", unsafe_allow_html=True)
+        
+        in_user = st.text_input("Username / Email", placeholder="Masukkan username anda", key="log_user")
+        in_pass = st.text_input("Password", placeholder="Masukkan password anda", type="password", key="log_pass")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        if st.button("LOG IN", use_container_width=True, type="primary"):
+            conn = sqlite3.connect(DB_LOGIN_PATH)
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM data_pengguna WHERE email=? AND password=?", (in_user, in_pass))
+            user_found = cursor.fetchone()
+            conn.close()
             
-    # Menutup seluruh tag pembungkus HTML login
-    st.markdown('</div></div>', unsafe_allow_html=True)
+            if user_found:
+                st.session_state.halaman = "dashboard"
+                st.rerun()
+            else:
+                st.error("Username atau Password salah!")
+                
+        st.markdown("<div style='margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 15px;'></div>", unsafe_allow_html=True)
+        
+        col_text, col_btn = st.columns([1.3, 1])
+        with col_text:
+            st.markdown("<p style='margin-top: 6px; font-size: 14px; color: #475569;'>Have not account?</p>", unsafe_allow_html=True)
+        with col_btn:
+            if st.button("Create Account", use_container_width=True, key="btn_to_signup"):
+                st.session_state.halaman = "signup"
+                st.rerun()
+                
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
 # 4. HALAMAN INTERFACE: SIGN UP
 # ==============================================================================
 elif st.session_state.halaman == "signup":
-    st.markdown('<div class="app-window">', unsafe_allow_html=True)
-    st.markdown('<div class="circle-top"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="circle-bottom"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="form-safe-content">', unsafe_allow_html=True)
+    col_kiri, col_tengah, col_kanan = st.columns([3.5, 5, 3.5])
     
-    # Konten Form Sign Up
-    st.markdown("<h1 style='text-align: center; color: #111111; margin-top: 10px; margin-bottom: 5px; font-weight: 800;'>Sign Up</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #487e47; font-size: 15px; font-weight: bold; margin-bottom: 25px;'>Create an account</p>", unsafe_allow_html=True)
-    
-    reg_email = st.text_input("Email", placeholder="Masukkan email baru", key="reg_e")
-    reg_pass1 = st.text_input("Password", placeholder="Buat kata sandi", type="password", key="reg_p1")
-    reg_pass2 = st.text_input("Confirm Password", placeholder="Ulangi kata sandi", type="password", key="reg_p2")
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    if st.button("Sign Up", use_container_width=True):
-        if reg_pass1 != reg_pass2:
-            st.error("Konfirmasi password tidak cocok!")
-        elif reg_email == "" or reg_pass1 == "":
-            st.warning("Form registrasi tidak boleh kosong!")
-        else:
-            try:
-                conn = sqlite3.connect(DB_LOGIN_PATH)
-                cursor = conn.cursor()
-                cursor.execute("INSERT INTO data_pengguna(email, password) VALUES (?,?)", (reg_email, reg_pass1))
-                conn.commit()
-                conn.close()
-                st.success("Registrasi Sukses! Silakan Login.")
+    with col_tengah:
+        st.markdown('<div class="main-form-box">', unsafe_allow_html=True)
+        
+        try:
+            logo_img = Image.open("logo.png")
+            st.image(logo_img, use_container_width=True)
+        except Exception:
+            st.markdown("<h3 style='text-align: center; color: #487e47;'>🟢 OPTIMALISASI LOGISTIK PERTANIAN</h3>", unsafe_allow_html=True)
+            
+        st.markdown("<h1 style='text-align: center; color: #1e293b; margin-top: 15px; margin-bottom: 5px; font-weight: 800;'>Sign Up</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #487e47; font-size: 14px; font-weight: bold; margin-bottom: 25px;'>Create an account</p>", unsafe_allow_html=True)
+        
+        reg_email = st.text_input("Email", placeholder="Masukkan email baru", key="reg_e")
+        reg_pass1 = st.text_input("Password", placeholder="Buat kata sandi", type="password", key="reg_p1")
+        reg_pass2 = st.text_input("Confirm Password", placeholder="Ulangi kata sandi", type="password", key="reg_p2")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        if st.button("Sign Up", use_container_width=True, type="primary"):
+            if reg_pass1 != reg_pass2:
+                st.error("Konfirmasi password tidak cocok!")
+            elif reg_email == "" or reg_pass1 == "":
+                st.warning("Form registrasi tidak boleh kosong!")
+            else:
+                try:
+                    conn = sqlite3.connect(DB_LOGIN_PATH)
+                    cursor = conn.cursor()
+                    cursor.execute("INSERT INTO data_pengguna(email, password) VALUES (?,?)", (reg_email, reg_pass1))
+                    conn.commit()
+                    conn.close()
+                    st.success("Registrasi Sukses! Silakan Login.")
+                    st.session_state.halaman = "login"
+                    st.rerun()
+                except sqlite3.IntegrityError:
+                    st.error("Email tersebut sudah terdaftar!")
+                    
+        st.markdown("<div style='margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 15px;'></div>", unsafe_allow_html=True)
+        
+        col_text2, col_btn2 = st.columns([1.4, 1])
+        with col_text2:
+            st.markdown("<p style='margin-top: 6px; font-size: 14px; color: #475569;'>Already have an account?</p>", unsafe_allow_html=True)
+        with col_btn2:
+            if st.button("Log In", use_container_width=True, key="btn_to_login"):
                 st.session_state.halaman = "login"
                 st.rerun()
-            except sqlite3.IntegrityError:
-                st.error("Email tersebut sudah terdaftar!")
                 
-    st.markdown("<div style='margin-top: 25px; border-top: 1px solid #e5e7eb; padding-top: 15px;'></div>", unsafe_allow_html=True)
-    
-    col_t2, col_b2 = st.columns([1.4, 1])
-    with col_t2:
-        st.markdown("<p style='margin-top: 6px; font-size: 14px;'>Already have an account?</p>", unsafe_allow_html=True)
-    with col_b2:
-        if st.button("Log In", use_container_width=True, key="btn_to_login"):
-            st.session_state.halaman = "login"
-            st.rerun()
-            
-    st.markdown('</div></div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# 5. HALAMAN INTERFACE: DASHBOARD UTAMA MONITORING (TETAP SAMA / TIDAK DIUBAH)
+# 5. HALAMAN INTERFACE: DASHBOARD MONITORING (TETAP SAMA / TIDAK DIUBAH)
 # ==============================================================================
 elif st.session_state.halaman == "dashboard":
     st.markdown("""
