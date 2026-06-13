@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 from PIL import Image
 import os
+import time
 
 # ==============================================================================
 # 1. INISIALISASI DATABASE & LOGIKA SISTEM (OTOMATIS BERSIH SAAT RESTART)
@@ -232,7 +233,7 @@ if st.session_state.halaman == "login":
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. HALAMAN INTERFACE: SIGN UP (DENGAN PEMBERITAHUAN SELESAI)
+# 4. HALAMAN INTERFACE: SIGN UP (PERBAIKAN PEMBERITAHUAN BERHASIL)
 # ==============================================================================
 elif st.session_state.halaman == "signup":
     st.markdown('<div class="bg-circle-top-right"></div>', unsafe_allow_html=True)
@@ -276,8 +277,11 @@ elif st.session_state.halaman == "signup":
                     conn.commit()
                     conn.close()
                     
-                    # Menampilkan pesan pemberitahuan akun berhasil dibuat sebelum pindah halaman
+                    # FIX: Menampilkan notifikasi pemberitahuan sukses dan memberi delay agar terbaca oleh pengguna
+                    st.toast("Akun berhasil dibuat! Mengalihkan ke halaman login...")
                     st.success("Akun berhasil dibuat!")
+                    time.sleep(2)
+                    
                     st.session_state.halaman = "login"
                     st.rerun()
                 except sqlite3.IntegrityError:
