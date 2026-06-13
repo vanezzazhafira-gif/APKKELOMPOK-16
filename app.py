@@ -12,7 +12,7 @@ st.set_page_config(page_title="Optimalisasi Logistik Pertanian", layout="wide")
 DB_LOGIN = "manajemen_akses.db"
 DB_ANALISIS = "logistik_hortikultura.db"
 
-# URL Logo Resmi Kelompok 16 sesuai gambar yang diberikan
+# URL Logo Resmi Kelompok 16
 LOGO_URL = "https://raw.githubusercontent.com/vanezzahafira-gif/APKKELOMPOK-16/main/login.jpeg"
 
 # =========================================================
@@ -133,13 +133,9 @@ if "page" not in st.session_state: st.session_state.page = "Login"
 if "hasil" not in st.session_state:
     st.session_state.hasil = {"komoditas": "-", "kondisi": "-", "sisa": "-", "suhu": "-"}
 if "riwayat_session" not in st.session_state: 
-    st.session_state.riwayat_session = [
-        (1, "Cabai", "Segar & Alami", "4 Hari", "7 - 10 °C"),
-        (2, "Wortel", "Kurang Segar", "2 Hari", "0 - 4 °C"),
-        (3, "Cabai", "Segar & Alami", "4 Hari", "7 - 10 °C")
-    ]
+    st.session_state.riwayat_session = []
 
-# Menyembunyikan komponen header bawaan streamlit agar bersih
+# Sembunyikan elemen header default Streamlit
 st.markdown("<style>header[data-testid='stHeader'] {display:none;}</style>", unsafe_allow_html=True)
 
 # =========================================================
@@ -150,106 +146,100 @@ st.markdown("<style>header[data-testid='stHeader'] {display:none;}</style>", uns
 if not st.session_state.login and st.session_state.page == "Login":
     st.markdown(f"""
     <style>
-        .stApp {{
-            background-color: #f3f3f3 !important;
-        }}
+        .stApp {{ background-color: #f3f3f3 !important; }}
         .login-bg-container {{
             position: relative;
             background-color: #ffffff;
             width: 420px;
-            height: 620px;
-            margin: 20px auto;
+            height: 560px;
+            margin: 40px auto;
             border: 1px solid #c0c0c0;
             border-radius: 4px;
-            overflow: hidden;
             box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: sans-serif;
+            padding: 30px;
+            box-sizing: border-box;
         }}
-        .circle-decor-top {{
-            position: absolute;
-            top: -110px; right: -90px;
-            width: 290px; height: 290px;
-            background-color: #437c37;
-            border-radius: 50%;
-            z-index: 1;
-        }}
-        .circle-decor-bottom {{
-            position: absolute;
-            bottom: -110px; left: -70px;
-            width: 250px; height: 250px;
-            background-color: #437c37;
-            border-radius: 50%;
-            z-index: 1;
-        }}
-        .login-logo {{
-            position: absolute;
-            top: 25px; left: 25px;
-            width: 110px; height: 110px;
-            background-image: url('{LOGO_URL}');
-            background-size: cover;
-            background-position: center;
-            z-index: 2;
-        }}
-        .login-title-box {{
-            text-align: center;
-            margin-top: 145px;
-            z-index: 2;
+        .header-box-custom {{
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
             position: relative;
         }}
-        .login-title-box h1 {{
-            font-size: 38px; font-weight: bold; color: #000000; margin: 0;
+        .logo-img-custom {{
+            width: 85px;
+            height: 85px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid #ddd;
+            margin-right: 15px;
         }}
-        .login-title-box p {{
-            font-size: 13.5px; font-weight: bold; color: #000000; margin-top: 12px; padding: 0 15px;
-            line-height: 1.3;
+        .title-text-custom {{
+            font-size: 28px;
+            font-weight: bold;
+            color: #000000;
+            margin: 0;
         }}
-        .login-form-wrapper {{
-            position: relative;
-            z-index: 5;
-            padding: 5px 45px;
+        .subtitle-text-custom {{
+            font-size: 13.5px;
+            font-weight: bold;
+            color: #000000;
+            margin-top: 15px;
+            margin-bottom: 25px;
+            line-height: 1.4;
         }}
-        .create-account-text {{
-            position: absolute;
-            bottom: 48px;
-            left: 0; right: 0;
-            text-align: center;
+        .footer-login-custom {{
+            margin-top: 30px;
             font-size: 13.5px;
             color: #000000;
-            z-index: 5;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }}
+        /* Menghilangkan margin bawaan widget streamlit di dalam box */
+        div[data-testid="stVerticalBlock"] > div {{
+            margin-bottom: 0px !important;
         }}
     </style>
-    <div class="login-bg-container">
-        <div class="circle-decor-top"></div>
-        <div class="circle-decor-bottom"></div>
-        <div class="login-logo"></div>
-        <div class="login-title-box">
-            <h1>Log In</h1>
-            <p>Aplikasi Prediksi Kadaluwarsa Produk Hortikultura</p>
-        </div>
-    </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("<div class='login-form-wrapper'>", unsafe_allow_html=True)
+    # Membuka pembungkus form kotak putih tunggal
+    st.markdown('<div class="login-bg-container">', unsafe_allow_html=True)
+    
+    # Elemen Header Atas (Logo + Tulisan Log In)
+    st.markdown(f"""
+    <div class="header-box-custom">
+        <img class="logo-img-custom" src="{LOGO_URL}">
+        <span class="title-text-custom">Log In</span>
+    </div>
+    <div class="subtitle-text-custom">Aplikasi Prediksi Kadaluwarsa Produk Hortikultura</div>
+    """, unsafe_allow_html=True)
+    
+    # Elemen Form Isian
     email = st.text_input("Username", key="login_email")
     password = st.text_input("Password", type="password", key="login_pass")
     
     st.write("")
-    col_btn_in, _ = st.columns([1, 1.5])
-    with col_btn_in:
-        if st.button("LOG IN", type="secondary", key="btn_execute_login"):
-            if login(email, password):
-                st.session_state.login = True
-                st.rerun()
-            else:
-                st.error("Username atau Password Salah")
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("<div class='create-account-text'>Have not account? &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>", unsafe_allow_html=True)
-    col_l1, col_l2, col_l3 = st.columns([1.65, 1, 1.3])
-    with col_l2:
-        if st.button("Create Account", key="go_signup"):
-            st.session_state.page = "Sign Up"
+    
+    # Tombol LOG IN Utama
+    if st.button("LOG IN", use_container_width=True, type="primary", key="btn_execute_login"):
+        if login(email, password):
+            st.session_state.login = True
             st.rerun()
+        else:
+            st.error("Username atau Password Salah")
+            
+    st.write("---")
+    
+    # Bagian Footer Bawah untuk Navigasi Buat Akun (Tetap di dalam Kotak)
+    st.markdown('<div class="footer-login-custom"><span>Have not account?</span>', unsafe_allow_html=True)
+    if st.button("Create Account", key="go_signup"):
+        st.session_state.page = "Sign Up"
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Menutup pembungkus form kotak putih tunggal
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # --- 2. HALAMAN SIGN UP ---
 elif not st.session_state.login and st.session_state.page == "Sign Up":
@@ -259,83 +249,89 @@ elif not st.session_state.login and st.session_state.page == "Sign Up":
         .signup-bg-container {{
             background-color: #ffffff;
             width: 420px;
-            height: 620px;
-            margin: 20px auto;
+            height: 590px;
+            margin: 30px auto;
             border: 1px solid #c0c0c0;
             border-radius: 4px;
-            position: relative;
             box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }}
-        .signup-title-header {{
-            text-align: center;
-            padding-top: 35px;
-        }}
-        .signup-title-header h1 {{
-            font-size: 40px; font-weight: bold; color: #000000; margin: 0;
-        }}
-        .signup-title-header p {{
-            font-size: 22px; font-weight: bold; color: #437c37; margin-top: 5px;
-        }}
-        .signup-form-wrapper {{
-            padding: 0px 45px;
-            margin-top: -390px;
+            font-family: sans-serif;
+            padding: 30px;
+            box-sizing: border-box;
             position: relative;
-            z-index: 10;
         }}
-        .signup-bottom-logo {{
-            position: absolute;
-            bottom: 25px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 110px;
-            height: 110px;
-            background-image: url('{LOGO_URL}');
-            background-size: cover;
-            background-position: center;
+        .signup-header {{
+            margin-bottom: 20px;
         }}
-        .already-account-text {{
-            position: absolute;
-            bottom: 152px;
-            left: 0; right: 0;
-            text-align: center;
-            font-size: 14px;
+        .signup-title {{
+            font-size: 34px;
+            font-weight: bold;
             color: #000000;
+            margin: 0;
+        }}
+        .signup-subtitle {{
+            font-size: 20px;
+            font-weight: bold;
+            color: #437c37;
+            margin-top: 5px;
+            margin-bottom: 20px;
+        }}
+        .logo-bottom-container {{
+            display: flex;
+            justify-content: center;
+            margin-top: 25px;
+        }}
+        .logo-bottom-img {{
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid #ddd;
+        }}
+        .footer-signup-custom {{
+            margin-top: 20px;
+            font-size: 13.5px;
+            color: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }}
     </style>
-    <div class="signup-bg-container">
-        <div class="signup-title-header">
-            <h1>Sign Up</h1>
-            <p>Create an account</p>
-        </div>
-        <div class="already-account-text">Already have an account? &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
-        <div class="signup-bottom-logo"></div>
-    </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("<div class='signup-form-wrapper'>", unsafe_allow_html=True)
+    st.markdown('<div class="signup-bg-container">', unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div class="signup-header">
+        <div class="signup-title">Sign Up</div>
+        <div class="signup-subtitle">Create an account</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
     new_email = st.text_input("Email", key="su_email")
     new_password = st.text_input("Password", type="password", key="su_pass")
     confirm = st.text_input("Confirm Password", type="password", key="su_confirm")
     
     st.write("")
-    col_su_center, _ = st.columns([1, 1])
-    with col_su_center:
-        if st.button("Sign Up", key="do_signup_action"):
-            if new_password == confirm:
-                if signup(new_email, new_password):
-                    st.success("Akun berhasil dibuat!")
-                    st.session_state.page = "Login"
-                    st.rerun()
-                else: st.error("Email sudah terdaftar.")
-            else: st.error("Password tidak cocok.")
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    col_s1, col_s2, col_s3 = st.columns([1.75, 0.6, 1.3])
-    with col_s2:
-        if st.button("Log In", key="back_to_login"):
-            st.session_state.page = "Login"
-            st.rerun()
+    if st.button("Sign Up", use_container_width=True, type="primary", key="do_signup_action"):
+        if new_password == confirm:
+            if signup(new_email, new_password):
+                st.success("Akun berhasil dibuat!")
+                st.session_state.page = "Login"
+                st.rerun()
+            else: st.error("Email sudah terdaftar.")
+        else: st.error("Password tidak cocok.")
+        
+    st.markdown('<div class="footer-signup-custom"><span>Already have an account?</span>', unsafe_allow_html=True)
+    if st.button("Log In", key="back_to_login"):
+        st.session_state.page = "Login"
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Logo kelompok di bagian bawah dalam box sign up
+    st.markdown(f'<div class="logo-bottom-container"><img class="logo-bottom-img" src="{LOGO_URL}"></div>', unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # --- 3. DASHBOARD UTAMA ---
 else:
@@ -343,7 +339,6 @@ else:
     <style>
         .stApp { background-color: #ffffff !important; }
         
-        /* Green Header Bar */
         .qt-main-header {
             background-color: #1a5e20;
             color: #ffffff;
@@ -357,7 +352,6 @@ else:
             border: 1px solid #113f15;
         }
 
-        /* Gray Group Box Layout Panels */
         .group-box-panel {
             border: 1px solid #adadad;
             background-color: #fcfcfc;
@@ -378,7 +372,6 @@ else:
             border-right: 1px solid #adadad;
         }
 
-        /* Image Preview Placeholder Box */
         .qt-preview-box {
             background-color: #e9e9e9;
             border: 1px solid #b0b0b0;
@@ -392,7 +385,6 @@ else:
             margin-bottom: 15px;
         }
 
-        /* Terminal Style Text Blocks */
         .qt-terminal-result {
             background-color: #ffffff;
             border: 1px solid #a0a0a0;
@@ -408,7 +400,6 @@ else:
             text-align: left;
         }
 
-        /* 4 Colored Buttons Core Triggers Styles */
         .stButton>button {
             border-radius: 0px !important;
             font-family: sans-serif !important;
@@ -431,9 +422,7 @@ else:
 
     col_kiri, col_kanan = st.columns([1, 1.4], gap="medium")
 
-    # -----------------------------------------------------
     # PANEL KIRI: PANEL INPUT SCANNER
-    # -----------------------------------------------------
     with col_kiri:
         st.markdown('<div class="group-box-panel"><div class="group-box-title">Panel Input Scanner</div>', unsafe_allow_html=True)
         
@@ -451,7 +440,6 @@ else:
         else:
             st.markdown('<div class="qt-preview-box">[ Preview ]</div>', unsafe_allow_html=True)
 
-        # Baris Tombol Warna Qt Designer
         col_b1, col_b2 = st.columns(2)
         with col_b1:
             st.markdown('<div class="col-blue-btn">', unsafe_allow_html=True)
@@ -475,9 +463,7 @@ else:
             
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # -----------------------------------------------------
     # PANEL KANAN: PANEL DASHBOARD UTAMA
-    # -----------------------------------------------------
     with col_kanan:
         st.markdown('<div class="group-box-panel"><div class="group-box-title">Dashboard</div>', unsafe_allow_html=True)
         
