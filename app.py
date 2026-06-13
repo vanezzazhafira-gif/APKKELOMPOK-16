@@ -7,14 +7,14 @@ import tempfile
 import os
 import base64
 
+# Mengatur layout menjadi wide dan membersihkan tema bawaan
 st.set_page_config(page_title="Optimalisasi Logistik Pertanian", layout="wide")
 
 DB_LOGIN = "manajemen_akses.db"
 DB_ANALISIS = "logistik_hortikultura.db"
 
-
 # =========================================================
-# DATABASE
+# DATABASE INITIALIZATION
 # =========================================================
 def init_db():
     conn = sqlite3.connect(DB_LOGIN)
@@ -43,7 +43,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-
 def login(email, password):
     conn = sqlite3.connect(DB_LOGIN)
     cur = conn.cursor()
@@ -51,7 +50,6 @@ def login(email, password):
     user = cur.fetchone()
     conn.close()
     return user
-
 
 def signup(email, password):
     conn = sqlite3.connect(DB_LOGIN)
@@ -65,12 +63,10 @@ def signup(email, password):
     finally:
         conn.close()
 
-
 init_db()
 
-
 # =========================================================
-# IMAGE HELPER
+# IMAGE TO BASE64 HELPER
 # =========================================================
 def file_to_base64(path):
     if os.path.exists(path):
@@ -78,24 +74,18 @@ def file_to_base64(path):
             return base64.b64encode(f.read()).decode()
     return ""
 
-
 login_bg = file_to_base64("login.jpeg")
 signup_bg = file_to_base64("signup.jpg")
 logo_img = file_to_base64("logo.png")
 
-
 # =========================================================
-# OPENCV ANALYSIS
+# OPENCV CORE ANALYSIS
 # =========================================================
 def rekomendasi_suhu(jenis):
-    if jenis == "Wortel":
-        return "0 - 4 °C"
-    if jenis == "Cabai":
-        return "7 - 10 °C"
-    if jenis == "Brokoli":
-        return "0 - 2 °C"
+    if jenis == "Wortel": return "0 - 4 °C"
+    if jenis == "Cabai": return "7 - 10 °C"
+    if jenis == "Brokoli": return "0 - 2 °C"
     return "-"
-
 
 def cek_kondisi_roi(path_gambar, jenis):
     img = cv2.imread(path_gambar)
@@ -104,7 +94,6 @@ def cek_kondisi_roi(path_gambar, jenis):
 
     h_orig, w_orig, _ = img.shape
     img_roi = img[0:h_orig, 0:w_orig]
-
     hsv = cv2.cvtColor(cv2.GaussianBlur(img_roi, (5, 5), 0), cv2.COLOR_BGR2HSV)
 
     mask_orange = cv2.inRange(hsv, np.array([4, 65, 45]), np.array([22, 255, 255]))
@@ -129,609 +118,305 @@ def cek_kondisi_roi(path_gambar, jenis):
         return "Error", f"Salah komoditas! Terdeteksi {warna_dominan}, bukan {jenis}.", -1
 
     mask_clean = mask_orange if jenis == "Wortel" else mask_red if jenis == "Cabai" else mask_green
-
     if cv2.countNonZero(mask_clean) < 500:
         return "Error", "Objek sayuran tidak terdeteksi jelas.", -1
 
-    damage_pct = (
-        cv2.countNonZero(
-            cv2.bitwise_and(
-                cv2.inRange(hsv, np.array([0, 0, 0]), np.array([180, 255, 70])),
-                mask_clean
-            )
-        ) / max(cv2.countNonZero(mask_clean), 1)
-    ) * 100
-
-    yellow_pct = (
-        cv2.countNonZero(
-            cv2.bitwise_and(
-                cv2.inRange(hsv, np.array([18, 40, 40]), np.array([40, 255, 255])),
-                mask_clean
-            )
-        ) / max(cv2.countNonZero(mask_clean), 1)
-    ) * 100
+    damage_pct = (cv2.countNonZero(cv2.bitwise_and(cv2.inRange(hsv, np.array([0, 0, 0]), np.array([180, 255, 70])), mask_clean)) / max(cv2.countNonZero(mask_clean), 1)) * 100
+    yellow_pct = (cv2.countNonZero(cv2.bitwise_and(cv2.inRange(hsv, np.array([18, 40, 40]), np.array([40, 255, 255])), mask_clean)) / max(cv2.countNonZero(mask_clean), 1)) * 100
 
     mean_sat = np.mean(hsv[:, :, 1])
-
     score = 0
-    if damage_pct > 10:
-        score += 4
-    elif damage_pct > 3:
-        score += 2
+    if damage_pct > 10: score += 4
+    elif damage_pct > 3: score += 2
+    if jenis in ["Brokoli", "Cabai"] and yellow_pct > 15: score += 2
+    if mean_sat < 60: score += 2
+    elif mean_sat < 90: score += 1
 
-    if jenis in ["Brokoli", "Cabai"] and yellow_pct > 15:
-        score += 2
-
-    if mean_sat < 60:
-        score += 2
-    elif mean_sat < 90:
-        score += 1
-
-    if score >= 4:
-        return jenis, "BUSUK / RUSAK", 0
-    if score >= 2:
-        return jenis, "Kurang Segar", 2
+    if score >= 4: return jenis, "BUSUK / RUSAK", 0
+    if score >= 2: return jenis, "Kurang Segar", 2
     return jenis, "Segar & Alami", 4
 
-
 # =========================================================
-# SESSION
+# STATE MANAGEMENT
 # =========================================================
-if "login" not in st.session_state:
-    st.session_state.login = False
-
-if "page" not in st.session_state:
-    st.session_state.page = "Login"
-
+if "login" not in st.session_state: st.session_state.login = False
+if "page" not in st.session_state: st.session_state.page = "Login"
 if "hasil" not in st.session_state:
-    st.session_state.hasil = {
-        "komoditas": "-",
-        "kondisi": "-",
-        "sisa": "-",
-        "suhu": "-"
-    }
+    st.session_state.hasil = {"komoditas": "-", "kondisi": "-", "sisa": "-", "suhu": "-"}
+if "riwayat_session" not in st.session_state: st.session_state.riwayat_session = []
 
-if "riwayat_session" not in st.session_state:
-    st.session_state.riwayat_session = []
-
+# Menampung mode input aktif ("kamera" atau "galeri")
+if "input_mode" not in st.session_state: st.session_state.input_mode = None
 
 # =========================================================
-# CSS (DESAIN ASLI DIMANTAPKAN AGAR INPUT KAMERA JADI RAPI)
+# PERFECT STYLE INJECTION (SANGAT PERSIS DESIGN QT)
 # =========================================================
 st.markdown("""
 <style>
+/* Hilangkan paksa navigasi bawaan streamlit */
 section[data-testid="stSidebar"] {display:none;}
 header[data-testid="stHeader"] {display:none;}
+footer {visibility: hidden;}
 
+/* Background dasar aplikasi putih abu bersih ala windows desktop */
 .stApp {
-    background:#111111;
+    background-color: #f0f0f0;
 }
 
 .block-container {
-    padding-top:0rem;
-    padding-bottom:0rem;
+    padding: 10px 20px;
 }
 
-/* LOGIN & SIGN UP */
-.auth-input div[data-testid="stTextInput"] input {
-    height:70px;
-    background:rgba(255,255,255,0.98);
-    color:black;
-    border:1px solid #dddddd;
-    font-size:15px;
+/* CONTAINER UTAMA WINDOWS */
+.main-window {
+    background-color: #ffffff;
+    border: 1px solid #707070;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #000000;
+    min-height: 680px;
 }
 
-.signup-input div[data-testid="stTextInput"] input {
-    height:42px;
-    background:rgba(255,255,255,0.98);
-    color:black;
-    border:1px solid #dddddd;
-    font-size:13px;
+/* GREEN HEADER TOP BAR */
+.title-bar {
+    background-color: #1c6b2a;
+    color: #ffffff;
+    padding: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
 }
 
-.auth-btn div.stButton > button,
-.signup-btn div.stButton > button,
-.small-btn div.stButton > button {
-    background:white;
-    color:black;
-    border:1px solid #cccccc;
-    border-radius:4px;
-    display:block;
-    margin:auto;
+/* LAYOUT DUA KOLOM */
+.window-body {
+    display: flex;
+    padding: 15px;
+    gap: 15px;
 }
 
-.auth-btn div.stButton > button {
-    width:180px;
-    height:50px;
+/* GROUP BOX STYLE (SANGAT PENTING UTK QT DESIGNER LOOK) */
+.group-box {
+    border: 1px solid #b0b0b0;
+    border-radius: 4px;
+    padding: 20px 12px 12px 12px;
+    position: relative;
+    background-color: #ffffff;
 }
 
-.signup-btn div.stButton > button {
-    width:120px;
-    height:40px;
+.group-box-title {
+    position: absolute;
+    top: -10px;
+    left: 12px;
+    background-color: #ffffff;
+    padding: 0 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #000000;
 }
 
-.small-btn div.stButton > button {
-    width:105px;
-    height:24px;
-    font-size:11px;
+.left-panel { width: 340px; }
+.right-panel { flex: 1; display: flex; flex-direction: column; gap: 15px; }
+
+/* PANEL PREVIEW GAMBAR ASLI */
+.preview-container {
+    width: 100%;
+    height: 250px;
+    border: 1px solid #a0a0a0;
+    background-color: #dcdcdc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #404040;
+    margin-top: 10px;
+    margin-bottom: 12px;
 }
 
-.auth-text {
-    text-align:center;
-    font-size:19px;
-    color:black;
+.preview-container img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
 }
 
-/* DASHBOARD STYLE */
-.dashboard-shell {
-    width:1120px;
-    min-height:660px;
-    margin:0 auto;
-    background:#f4f4f4;
-    color:black;
-    border:1px solid #d0d0d0;
-    position:relative;
+/* TOMBOL WARNA WARNI EDITAN QT DESIGNER */
+.stButton > button {
+    width: 100%;
+    height: 34px;
+    border-radius: 0px !important;
+    font-size: 13px;
+    font-weight: bold;
+    border: 1px solid #555555;
+    transition: none;
+    margin-bottom: 6px;
 }
 
-.topbar {
-    height:70px;
-    background:#145d1f;
-    color:white;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:21px;
-    font-weight:800;
-    letter-spacing:0.2px;
-    position:relative;
+.btn-blue > div > button { background-color: #1d73e7 !important; color: white !important; }
+.btn-orange > div > button { background-color: #f39c12 !important; color: white !important; }
+.btn-purple > div > button { background-color: #8e44ad !important; color: white !important; }
+.btn-green > div > button { background-color: #27ae60 !important; color: white !important; }
+
+/* KOTAK HASIL DATA PINDAI */
+.result-box {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 15px;
+    line-height: 1.5;
+    white-space: pre;
+    color: #000000;
 }
 
-.logo-box {
-    position:absolute;
-    left:15px;
-    top:7px;
-    width:90px;
-    height:55px;
-    background:white;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+/* INPUT SELECTBOX CUSTOM */
+div[data-testid="stSelectbox"] > div {
+    border-radius: 0px !important;
+    border: 1px solid #a0a0a0;
 }
 
-.logo-box img {
-    max-width:85px;
-    max-height:52px;
-}
-
-.dash-content {
-    display:grid;
-    grid-template-columns: 405px 1fr;
-    column-gap:45px;
-    padding:38px 30px 25px 30px;
-}
-
-.left-area {
-    width:405px;
-}
-
-.right-area {
-    width:600px;
-}
-
-.section-title {
-    font-size:16px;
-    font-weight:700;
-    margin-left:12px;
-    margin-bottom:2px;
-}
-
-.select-wrap {
-    width:400px;
-    margin-left:12px;
-}
-
-.preview-panel {
-    width:400px;
-    height:250px;
-    margin-left:12px;
-    margin-top:10px;
-    border:2px solid #111;
-    background:#efefef;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-weight:700;
-    font-size:17px;
-}
-
-.preview-panel img {
-    max-width:100%;
-    max-height:100%;
-    object-fit:contain;
-}
-
-.button-stack {
-    margin-left:12px;
-    margin-top:15px; /* Disesuaikan agar pas dengan penempatan komponen input baru */
-    width:400px;
-}
-
-.blue-btn div.stButton > button,
-.orange-btn div.stButton > button,
-.purple-btn div.stButton > button,
-.green-btn div.stButton > button {
-    width:400px;
-    height:45px;
-    border-radius:0px;
-    color:white;
-    font-weight:700;
-    border:none;
-    margin-bottom:4px;
-}
-
-.blue-btn div.stButton > button {background:#1976d2;}
-.orange-btn div.stButton > button {background:#ff9800;}
-.purple-btn div.stButton > button {background:#7b1fa2;}
-.green-btn div.stButton > button {background:#2e7d32;}
-
-.result-panel {
-    width:590px;
-    height:200px;
-    border:2px solid #111;
-    background:#f8f8f8;
-    margin-top:16px;
-    font-size:18px;
-    font-weight:700;
-    padding-top:18px;
-    text-align:center;
-    line-height:1.35;
-}
-
-.result-text {
-    font-family:Arial, sans-serif;
-    white-space:pre-line;
-}
-
-.table-panel {
-    width:590px;
-    height:240px;
-    background:white;
-    margin-top:0px;
-}
-
-div[data-testid="stSelectbox"] {
-    margin-top:0px;
-    margin-bottom:0px;
-}
-
-div[data-testid="stSelectbox"] div {
-    color:black;
-}
-
-/* Kustomisasi kontainer input fungsional agar rapi dan muat di panel scanner */
-div[data-testid="stFileUploader"], div[data-testid="stCameraInput"] {
-    margin-left: 12px;
-    width: 400px;
-    margin-bottom: 10px;
-}
-
-[data-testid="stDataFrame"] {
-    background:white;
-}
-
-.clear-btn div.stButton > button {
-    width:400px;
-    height:32px;
-    border-radius:0px;
-    background:#555;
-    color:white;
-    margin-top:5px;
-}
+/* TRICK: MENYEMBUNYIKAN INPUTAN MODUL ASLI STREAMLIT SECARA TOTAL */
+.hidden-uploader { display: none; }
 </style>
 """, unsafe_allow_html=True)
 
-
 # =========================================================
-# LOGIN PAGE
+# HALAMAN LOGIN & SIGNUP (TETAP TERINTEGRASI)
 # =========================================================
 if not st.session_state.login and st.session_state.page == "Login":
     bg = f"data:image/jpeg;base64,{login_bg}" if login_bg else ""
-
-    st.markdown(f"""
-    <style>
-    .block-container {{
-        max-width:536px;
-        min-height:851px;
-        margin:18px auto;
-        padding-left:50px;
-        padding-right:50px;
-        background-image:url('{bg}');
-        background-size:cover;
-        background-position:center top;
-        background-repeat:no-repeat;
-        border-radius:8px;
-        overflow:hidden;
-    }}
-    </style>
-    """, unsafe_allow_html=True)
-
-    st.markdown('<div style="height:360px;"></div>', unsafe_allow_html=True)
-
-    st.markdown('<div class="auth-input">', unsafe_allow_html=True)
-    email = st.text_input("Username", placeholder="Username", label_visibility="collapsed")
-    password = st.text_input("Password", type="password", placeholder="Password", label_visibility="collapsed")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<div style="height:18px;"></div>', unsafe_allow_html=True)
-
-    st.markdown('<div class="auth-btn">', unsafe_allow_html=True)
+    st.markdown(f'<style>.block-container{{max-width:500px; margin:50px auto; background-image:url("{bg}");}}</style>', unsafe_allow_html=True)
+    st.subheader("Log In")
+    email = st.text_input("Username")
+    password = st.text_input("Password", type="password")
     if st.button("LOG IN"):
-        if login(email, password):
-            st.session_state.login = True
-            st.rerun()
-        else:
-            st.error("Username atau Password Salah")
-    st.markdown('</div>', unsafe_allow_html=True)
+        if login(email, password): st.session_state.login = True; st.rerun()
+        else: st.error("Username atau Password Salah")
+    if st.button("Create Account"): st.session_state.page = "Sign Up"; st.rerun()
 
-    st.markdown('<div style="height:65px;"></div>', unsafe_allow_html=True)
-
-    c1, c2 = st.columns([2.4, 1])
-    with c1:
-        st.markdown('<div class="auth-text">Have not account?</div>', unsafe_allow_html=True)
-    with c2:
-        st.markdown('<div class="small-btn">', unsafe_allow_html=True)
-        if st.button("Create Account"):
-            st.session_state.page = "Sign Up"
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
-
-
-# =========================================================
-# SIGN UP PAGE
-# =========================================================
 elif not st.session_state.login and st.session_state.page == "Sign Up":
-    bg = f"data:image/jpeg;base64,{signup_bg}" if signup_bg else ""
-
-    st.markdown(f"""
-    <style>
-    .block-container {{
-        max-width:535px;
-        min-height:849px;
-        margin:18px auto;
-        padding-left:140px;
-        padding-right:115px;
-        background-image:url('{bg}');
-        background-size:cover;
-        background-position:center top;
-        background-repeat:no-repeat;
-        border-radius:8px;
-        overflow:hidden;
-    }}
-    </style>
-    """, unsafe_allow_html=True)
-
-    st.markdown('<div style="height:335px;"></div>', unsafe_allow_html=True)
-
-    st.markdown('<div class="signup-input">', unsafe_allow_html=True)
-    new_email = st.text_input("Email", placeholder="Email", label_visibility="collapsed")
-    new_password = st.text_input("Password", type="password", placeholder="Password", label_visibility="collapsed")
-    confirm = st.text_input("Confirm Password", type="password", placeholder="Confirm Password", label_visibility="collapsed")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<div style="height:22px;"></div>', unsafe_allow_html=True)
-
-    st.markdown('<div class="signup-btn">', unsafe_allow_html=True)
+    st.subheader("Sign Up")
+    new_email = st.text_input("Email")
+    new_password = st.text_input("Password", type="password")
+    confirm = st.text_input("Confirm Password", type="password")
     if st.button("Sign Up"):
-        if new_email == "" or new_password == "":
-            st.error("Semua data harus diisi")
-        elif new_password != confirm:
-            st.error("Password tidak sama")
-        elif signup(new_email, new_password):
-            st.success("Akun berhasil dibuat. Silakan login.")
-        else:
-            st.error("Email sudah digunakan.")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<div style="height:55px;"></div>', unsafe_allow_html=True)
-
-    c1, c2 = st.columns([2.8, 1])
-    with c1:
-        st.markdown('<div class="auth-text">Already have an account?</div>', unsafe_allow_html=True)
-    with c2:
-        st.markdown('<div class="small-btn">', unsafe_allow_html=True)
-        if st.button("Log In"):
-            st.session_state.page = "Login"
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
-
+        if new_password == confirm and signup(new_email, new_password): st.success("Sukses!"); st.session_state.page = "Login"; st.rerun()
+        else: st.error("Gagal atau password tidak cocok")
 
 # =========================================================
-# DASHBOARD PAGE
+# HALAMAN DASHBOARD UTAMA (RE-DESIGN TOTAL)
 # =========================================================
 else:
-    st.markdown("""
-    <style>
-    .block-container {
-        max-width:1120px;
-        margin:0 auto;
-        padding-left:0px;
-        padding-right:0px;
-        background:transparent;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    # --- PROSES INPUT KAMERA DAN GALERI TERSEMBUNYI ---
+    # Komponen ini tidak terlihat di layar, tapi bekerja di latar belakang sistem HP Android
+    with st.sidebar:
+        st.markdown('<div class="hidden-uploader">', unsafe_allow_html=True)
+        native_cam = st.camera_input("Sistem_Kamera", key="hidden_cam")
+        native_file = st.file_uploader("Sistem_Galeri", type=["jpg","jpeg","png"], key="hidden_file")
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    logo_html = ""
-    if logo_img:
-        logo_html = f'<div class="logo-box"><img src="data:image/png;base64,{logo_img}"></div>'
+    # Menentukan file gambar mana yang ditangkap sistem
+    active_file = None
+    if st.session_state.input_mode == "kamera" and native_cam is not None:
+        active_file = native_cam
+    elif st.session_state.input_mode == "galeri" and native_file is not None:
+        active_file = native_file
 
-    st.markdown(f"""
-    <div class="dashboard-shell">
-        <div class="topbar">
-            {logo_html}
-            OPTIMALISASI DISTRIBUSI LOGISTIK HORTIKULTURA
-        </div>
-        <div class="dash-content">
-            <div class="left-area">
-                <div class="section-title">Panel Input Scanner</div>
-    """, unsafe_allow_html=True)
+    # --- HTML RENDER SELESAI & RAPI ---
+    st.markdown('<div class="main-window">', unsafe_allow_html=True)
+    st.markdown('<div class="title-bar">OPTIMALISASI DISTRIBUSI LOGISTIK HORTIKULTURA</div>', unsafe_allow_html=True)
+    st.markdown('<div class="window-body">', unsafe_allow_html=True)
 
-    st.markdown('<div class="select-wrap">', unsafe_allow_html=True)
-    komoditas = st.selectbox("", ["Wortel", "Cabai", "Brokoli"], label_visibility="collapsed")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # 📌 DUA INPUT FUNGSIONAL ASLI: Kamera & File Uploader (Akan menangkap gambar asli di HP)
-    uploaded_file = st.file_uploader(
-        "Upload dari Galeri",
-        type=["jpg", "jpeg", "png"],
-        label_visibility="visible"
-    )
-    
-    camera_file = st.camera_input(
-        "Ambil Foto dari Kamera HP", 
-        label_visibility="visible"
-    )
-
-    # Menentukan file mana yang sedang aktif dipakai oleh user
-    active_image_file = camera_file if camera_file is not None else uploaded_file
-
-    # Manajemen Preview Panel kustom agar menampilkan gambar yang aktif
-    if active_image_file:
-        image = Image.open(active_image_file)
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as preview_tmp:
-            image.convert("RGB").save(preview_tmp.name)
-        img64 = file_to_base64(preview_tmp.name)
-        st.markdown(
-            f'<div class="preview-panel"><img src="data:image/jpeg;base64,{img64}"></div>',
-            unsafe_allow_html=True
-        )
-    else:
-        st.markdown('<div class="preview-panel">[ Preview ]</div>', unsafe_allow_html=True)
-
-    # 📌 STRUKTUR TOMBOL ASLI DESAIN KAMU (TETAP UTUH TANPA PERUBAHAN)
-    st.markdown('<div class="button-stack">', unsafe_allow_html=True)
-
-    st.markdown('<div class="blue-btn">', unsafe_allow_html=True)
-    st.button("Buka Kamera")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<div class="orange-btn">', unsafe_allow_html=True)
-    st.button("Pilih Foto dari Galeri")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<div class="purple-btn">', unsafe_allow_html=True)
-    st.button("Tandai Area Sayur")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<div class="green-btn">', unsafe_allow_html=True)
-    analisis = st.button("Jalankan Analisis")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<div class="clear-btn">', unsafe_allow_html=True)
-    selesai = st.button("Selesai / Bersihkan Hasil")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    if selesai:
-        st.session_state.hasil = {
-            "komoditas": "-",
-            "kondisi": "-",
-            "sisa": "-",
-            "suhu": "-"
-        }
-        st.session_state.riwayat_session = []
-        st.rerun()
-
-    # Eksekusi logika analisis OpenCV berdasarkan file gambar yang aktif
-    if analisis:
-        if active_image_file is None:
-            st.session_state.hasil = {
-                "komoditas": "Error",
-                "kondisi": "Ambil kamera atau pilih foto dulu",
-                "sisa": "-",
-                "suhu": "-"
-            }
+    # -----------------------------------------------------
+    # 1. KOLOM KIRI: PANEL INPUT SCANNER
+    # -----------------------------------------------------
+    st.columns_left = st.container()
+    with st.columns_left:
+        st.markdown('<div class="group-box left-panel"><span class="group-box-title">Panel Input Scanner</span>', unsafe_allow_html=True)
+        
+        # Dropdown Komoditas
+        komoditas = st.selectbox("", ["Wortel", "Cabai", "Brokoli"], label_visibility="collapsed")
+        
+        # Logika Render Gambar Preview Kontainer
+        if active_file:
+            img_open = Image.open(active_file)
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp_prev:
+                img_open.convert("RGB").save(tmp_prev.name)
+            base64_data = file_to_base64(tmp_prev.name)
+            st.markdown(f'<div class="preview-container"><img src="data:image/jpeg;base64,{base64_data}"></div>', unsafe_allow_html=True)
         else:
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
-                tmp.write(active_image_file.getbuffer())
-                path = tmp.name
+            st.markdown('<div class="preview-container">[ Preview ]</div>', unsafe_allow_html=True)
 
-            nama, kondisi, sisa = cek_kondisi_roi(path, komoditas)
+        # Tombol Aksi Kustom Berwarna
+        st.markdown('<div class="btn-blue">', unsafe_allow_html=True)
+        if st.button("Buka Kamera"):
+            st.session_state.input_mode = "kamera"
+            st.info("📸 Kamera Sistem Siap. Silakan klik icon kamera bawaan browser/HP di menu samping.")
+        st.markdown('</div><div class="btn-orange">', unsafe_allow_html=True)
+        if st.button("Pilih Foto dari Galeri"):
+            st.session_state.input_mode = "galeri"
+            st.info("📁 Galeri Sistem Siap. Silakan pilih berkas foto dari menu unggah samping.")
+        st.markdown('</div><div class="btn-purple">', unsafe_allow_html=True)
+        st.button("Tandai Area Sayur (ROI)")
+        
+        st.markdown('</div><div class="btn-green">', unsafe_allow_html=True)
+        jalankan_analisis = st.button("Jalankan Analisis")
+        st.markdown('</div></div>', unsafe_allow_html=True)
 
-            if sisa == -1:
+    # -----------------------------------------------------
+    # 2. KOLOM KANAN: PANEL DASHBOARD & TABEL
+    # -----------------------------------------------------
+    st.columns_right = st.container()
+    with st.columns_right:
+        st.markdown('<div class="right-panel">', unsafe_allow_html=True)
+        
+        # Sub-Box Atas: Hasil Pindai
+        st.markdown('<div class="group-box"><span class="group-box-title">Dashboard</span>', unsafe_allow_html=True)
+        
+        # Eksekusi Logika Analisis Gambar
+        if jalankan_analisis and active_file:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp_analisis:
+                tmp_analisis.write(active_file.getbuffer())
+                path_img = tmp_analisis.name
+            
+            nama_veg, kond_veg, sisa_hari = cek_kondisi_roi(path_img, komoditas)
+            if sisa_hari != -1:
+                suhu_rekom = rekomendasi_suhu(nama_veg)
                 st.session_state.hasil = {
-                    "komoditas": "Error",
-                    "kondisi": kondisi,
-                    "sisa": "-",
-                    "suhu": "-"
+                    "komoditas": nama_veg,
+                    "kondisi": kond_veg,
+                    "sisa": f"{sisa_hari} Hari",
+                    "suhu": suhu_rekom
                 }
-            else:
-                suhu = rekomendasi_suhu(nama)
-                sisa_hari = f"{sisa} Hari"
-
-                st.session_state.hasil = {
-                    "komoditas": nama,
-                    "kondisi": kondisi,
-                    "sisa": sisa_hari,
-                    "suhu": suhu
-                }
-
+                # Simpan ke SQLite
                 conn = sqlite3.connect(DB_ANALISIS)
                 cur = conn.cursor()
-                cur.execute(
-                    """
-                    INSERT INTO riwayat_pindai 
-                    (komoditas,kondisi,sisa_segar,suhu_simpan) 
-                    VALUES (?,?,?,?)
-                    """,
-                    (nama, kondisi, sisa_hari, suhu)
-                )
+                cur.execute("INSERT INTO riwayat_pindai (komoditas,kondisi,sisa_segar,suhu_simpan) VALUES (?,?,?,?)", (nama_veg, kond_veg, f"{sisa_hari} Hari", suhu_rekom))
                 conn.commit()
                 conn.close()
-
+                
+                # Update visual table row
                 new_id = len(st.session_state.riwayat_session) + 1
-                st.session_state.riwayat_session.append(
-                    (new_id, nama, kondisi, sisa_hari, suhu)
-                )
+                st.session_state.riwayat_session.append((new_id, nama_veg, kond_veg, f"{sisa_hari} Hari", suhu_rekom))
 
-    st.markdown("""
-            </div>
-            <div class="right-area">
-                <div class="section-title">Dashboard</div>
-    """, unsafe_allow_html=True)
+        # Render Text Hasil Pindai Sistem
+        res = st.session_state.hasil
+        st.markdown(f"""
+<div class="result-box">Hasil Pindai Sistem
+==============================
+Komoditas      : {res["komoditas"]}
+Kondisi        : {res["kondisi"]}
+Sisa Masa      : {res["sisa"]}
+Suhu Simpan    : {res["suhu"]}</div>
+""", unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    h = st.session_state.hasil
-    st.markdown(f"""
-        <div class="result-panel">
-            <div class="result-text">
-Hasil Pindai Sistem:
------------------------------
-Komoditas Terdeteksi : {h["komoditas"]}
-Kondisi Kematangan   : {h["kondisi"]}
-Estimasi Sisa Segar  : {h["sisa"]}
-Suhu Penyimpanan     : {h["suhu"]}
-            </div>
-        </div>
-        <div class="table-panel">
-    """, unsafe_allow_html=True)
+        # Sub-Box Bawah: Tabel Riwayat Logistik
+        st.markdown('<div class="group-box" style="flex:1;"><span class="group-box-title">Riwayat Logistik</span>', unsafe_allow_html=True)
+        st.dataframe(
+            st.session_state.riwayat_session,
+            use_container_width=True,
+            hide_index=True,
+            column_config={0: "ID", 1: "Nama", 2: "Kondisi", 3: "Sisa", 4: "Suhu"}
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    st.dataframe(
-        st.session_state.riwayat_session,
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            0: "ID",
-            1: "Nama Komoditas",
-            2: "Kondisi",
-            3: "Masa Simpan",
-            4: "Suhu"
-        }
-    )
-
-    st.markdown("""
-                </div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Tutup Tag Selesai Konstruksi Utama HTML
+    st.markdown('</div></div></div>', unsafe_allow_html=True)
