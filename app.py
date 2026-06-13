@@ -7,7 +7,7 @@ import os
 import time
 
 # ==============================================================================
-# 1. INISIALISASI DATABASE & LOGIKA SISTEM (OTOMATIS BERSIH SAAT RESTART)
+# 1. INISIALISASI DATABASE & LOGIKA SISTEM (OTOMATIS BERSIH & RESET ID KE 1)
 # ==============================================================================
 DB_LOGIN_PATH = "manajemen_akses.db"
 DB_ANALISIS_PATH = "logistik_hortikultura.db"
@@ -39,9 +39,11 @@ def init_databases():
         )
     """)
     
-    # Setiap kali aplikasi dimuat ulang, bersihkan riwayat lama agar fresh
+    # RESET TOTAL SAAT APLIKASI DI-BOOT/RESTART: Hapus data & kembalikan ID ke angka 1
     if "db_terbersihkan" not in st.session_state:
         cursor.execute("DELETE FROM riwayat_pindai")
+        # Perintah ini wajib untuk memaksa AUTOINCREMENT kembali mulai dari 1
+        cursor.execute("UPDATE sqlite_sequence SET seq = 0 WHERE name = 'riwayat_pindai'")
         st.session_state.db_terbersihkan = True
         
     conn.commit()
@@ -234,7 +236,7 @@ if st.session_state.halaman == "login":
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. HALAMAN INTERFACE: SIGN UP (PERBAIKAN PEMBERITAHUAN BERHASIL)
+# 4. HALAMAN INTERFACE: SIGN UP
 # ==============================================================================
 elif st.session_state.halaman == "signup":
     st.markdown('<div class="bg-circle-top-right"></div>', unsafe_allow_html=True)
@@ -339,13 +341,11 @@ elif st.session_state.halaman == "dashboard":
             if st.button("Buka Kamera", use_container_width=True):
                 st.session_state.mode_input = "kamera"
 
-        # Tampilan Unggah Berkas (Hanya muncul jika tombol Galeri ditekan)
         if st.session_state.mode_input == "galeri":
             file_terunggah = st.file_uploader("Unggah berkas foto atau gambar sayur:", type=["jpg", "png", "jpeg"])
             if file_terunggah:
                 st.session_state.foto_input = Image.open(file_terunggah)
                 
-        # Tampilan Kamera Aktif (Hanya muncul jika tombol Kamera ditekan)
         if st.session_state.mode_input == "kamera":
             ambil_kamera = st.camera_input("Ambil Foto langsung dari Kamera:")
             if ambil_kamera:
@@ -374,7 +374,12 @@ elif st.session_state.halaman == "dashboard":
                     
                     conn = sqlite3.connect(DB_ANALISIS_PATH)
                     cursor = conn.cursor()
-                    cursor.execute("DELETE FROM riwayat_pindai") # Bersihkan riwayat lama saat di-scan ulang
+                    
+                    # Bersihkan riwayat data lama dan RESET urutan AUTOINCREMENT kembali ke 1 sebelum menyimpan data baru
+                    cursor.execute("DELETE FROM riwayat_pindai")
+                    cursor.execute("UPDATE sqlite_sequence SET seq = 0 WHERE name = 'riwayat_pindai'")
+                    
+                    # Simpan data pemindaian baru yang selalu menempati ID = 1
                     cursor.execute("""
                         INSERT INTO riwayat_pindai (komoditas, kondisi, sisa_segar, suhu_simpan)
                         VALUES (?, ?, ?, ?)
@@ -404,7 +409,7 @@ elif st.session_state.halaman == "dashboard":
             <p style="margin: 0; text-align: center;">====================</p>
             <p style="margin: 5px 0 5px 40px;">Komoditas : {v_nama}</p>
             <p style="margin: 5px 0 5px 40px;">Kondisi   : {v_kondisi}</p>
-            <p style="margin: 5px 0 5px 40px;">Sisa      : {v_sisa} Hari</p>
+            <p style="margin: 5px 0 5px 40px;">Sisa      : {v_sisa}</p>
             <p style="margin: 5px 0 5px 40px;">Suhu Simpan : {v_suhu}</p>
         </div>
         """, unsafe_allow_html=True)
