@@ -90,7 +90,7 @@ def cek_kondisi_citra(cv_img, jenis):
     return jenis, status, sisa
 
 # ==============================================================================
-# 2. SEGMEN LAYOUT CSS & BACKGROUND ORNAMEN BULAT 
+# 2. SEGMEN LAYOUT CSS & SOLUSI FIX LABEL TERSANDERA DARK MODE
 # ==============================================================================
 st.set_page_config(page_title="Optimalisasi Logistik Pertanian", layout="wide")
 
@@ -101,10 +101,18 @@ if "foto_input" not in st.session_state:
 
 st.markdown("""
 <style>
+    /* Paksa background aplikasi tetap putih bersih */
     .stApp {
         background-color: #ffffff !important;
     }
     header { visibility: hidden; }
+    
+    /* FIX: Memunculkan teks Label (Username, Email, Password) menjadi Hitam Tegas */
+    .stWidgetLabel p {
+        color: #000000 !important;
+        font-weight: 600 !important;
+        font-size: 16px !important;
+    }
     
     /* Ornamen Lingkaran Hijau Kanan Atas */
     .bg-circle-top-right {
@@ -146,6 +154,7 @@ st.markdown("""
         width: 100%;
     }
     
+    /* Desain Kolom Input Agar Nyaman Dilihat */
     .stTextInput>div>div>input {
         background-color: #ffffff !important;
         color: #000000 !important;
@@ -154,7 +163,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Nama file disesuaikan dengan struktur repository GitHub Anda (logoo.PNG)
 NAMA_FILE_LOGO = "logoo.PNG"
 
 # ==============================================================================
@@ -169,13 +177,12 @@ if st.session_state.halaman == "login":
     with col_center:
         st.markdown('<div class="login-container">', unsafe_allow_html=True)
         
-        # MENAMPILKAN LOGO DI TENGAH SEBELUM JUDUL FORM
         st.markdown('<div class="logo-wrapper">', unsafe_allow_html=True)
         if os.path.exists(NAMA_FILE_LOGO):
             img_real_logo = Image.open(NAMA_FILE_LOGO)
             st.image(img_real_logo, width=250)
         else:
-            st.warning(f"File '{NAMA_FILE_LOGO}' tidak ditemukan di direktori aktif.")
+            st.warning(f"File '{NAMA_FILE_LOGO}' tidak ditemukan.")
         st.markdown('</div>', unsafe_allow_html=True)
         
         st.markdown("<h1 style='text-align: center; color: #000000; font-size: 50px; font-weight: bold; margin-top: 5px; margin-bottom: 25px;'>Log In</h1>", unsafe_allow_html=True)
@@ -226,13 +233,12 @@ elif st.session_state.halaman == "signup":
     with col_center:
         st.markdown('<div class="login-container">', unsafe_allow_html=True)
         
-        # MENAMPILKAN LOGO DI TENGAH SEBELUM JUDUL FORM
         st.markdown('<div class="logo-wrapper">', unsafe_allow_html=True)
         if os.path.exists(NAMA_FILE_LOGO):
             img_real_logo = Image.open(NAMA_FILE_LOGO)
             st.image(img_real_logo, width=250)
         else:
-            st.warning(f"File '{NAMA_FILE_LOGO}' tidak ditemukan di direktori aktif.")
+            st.warning(f"File '{NAMA_FILE_LOGO}' tidak ditemukan.")
         st.markdown('</div>', unsafe_allow_html=True)
         
         st.markdown("<h1 style='text-align: center; color: #000000; font-size: 50px; font-weight: bold; margin-top: 5px; margin-bottom: 25px;'>Sign Up</h1>", unsafe_allow_html=True)
