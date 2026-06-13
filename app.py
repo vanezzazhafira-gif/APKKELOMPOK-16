@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 
 # ==============================================================================
-# 1. INISIALISASI DATABASE & LOGIKA SISTEM (TETAP SAMA / JANGAN DIUBAH)
+# 1. INISIALISASI DATABASE & LOGIKA SISTEM (TETAP SAMA / TIDAK DIUBAH)
 # ==============================================================================
 DB_LOGIN_PATH = "manajemen_akses.db"
 DB_ANALISIS_PATH = "logistik_hortikultura.db"
@@ -89,7 +89,7 @@ def cek_kondisi_citra(cv_img, jenis):
     return jenis, status, sisa
 
 # ==============================================================================
-# 2. KONFIGURASI HALAMAN & STYLE DESAIN (MENYATUKAN BENTUK WINDOW DI TENGAH)
+# 2. KONFIGURASI HALAMAN & CSS BARU (ANTI-BENTROK / BERSIH)
 # ==============================================================================
 st.set_page_config(page_title="Optimalisasi Logistik Pertanian", layout="wide")
 
@@ -98,52 +98,62 @@ if "halaman" not in st.session_state:
 if "foto_input" not in st.session_state:
     st.session_state.foto_input = None
 
+# CSS Baru yang memisahkan layer lingkaran agar berada di paling latar belakang (z-index: 1)
 st.markdown("""
 <style>
+    /* Latar belakang utama aplikasi */
     .stApp {
         background-color: #f3f4f6 !important;
     }
+    
     header { visibility: hidden; }
     
-    .window-container-box {
+    /* Box Putih Utama Utama */
+    .app-window {
         background-color: #ffffff !important;
-        padding: 40px 35px;
+        padding: 35px;
         border-radius: 16px;
-        box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
+        box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.08);
         max-width: 440px;
-        margin: 50px auto;
+        margin: 40px auto;
         position: relative;
         overflow: hidden;
         border: 1px solid #e5e7eb;
     }
 
-    .window-container-box::before {
-        content: "";
+    /* Lingkaran Hijau Kanan Atas */
+    .circle-top {
         position: absolute;
-        width: 220px;
-        height: 220px;
+        width: 180px;
+        height: 180px;
         background-color: #487e47;
         border-radius: 50%;
-        top: -90px;
-        right: -70px;
-        z-index: 0;
+        top: -70px;
+        right: -60px;
+        z-index: 1;
     }
 
-    .window-container-box::after {
-        content: "";
+    /* Lingkaran Hijau Kiri Bawah */
+    .circle-bottom {
         position: absolute;
-        width: 220px;
-        height: 220px;
+        width: 180px;
+        height: 180px;
         background-color: #487e47;
         border-radius: 50%;
-        bottom: -90px;
-        left: -70px;
-        z-index: 0;
+        bottom: -70px;
+        left: -60px;
+        z-index: 1;
     }
 
-    .inner-content {
+    /* Konten Form (Wajib z-index 2 agar selalu di atas lingkaran) */
+    .form-safe-content {
         position: relative;
         z-index: 2;
+    }
+    
+    /* Memaksa teks label input berwarna gelap terang */
+    .form-safe-content label, .form-safe-content p {
+        color: #1f2937 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -152,9 +162,14 @@ st.markdown("""
 # 3. HALAMAN INTERFACE: LOG IN
 # ==============================================================================
 if st.session_state.halaman == "login":
-    st.markdown('<div class="window-container-box"><div class="inner-content">', unsafe_allow_html=True)
+    # Membuat susunan komponen HTML berlapis secara aman
+    st.markdown('<div class="app-window">', unsafe_allow_html=True)
+    st.markdown('<div class="circle-top"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="circle-bottom"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="form-safe-content">', unsafe_allow_html=True)
     
-    st.markdown("<h1 style='text-align: center; color: #111111; margin-bottom: 5px; font-weight: 800;'>Log In</h1>", unsafe_allow_html=True)
+    # Konten Form Login
+    st.markdown("<h1 style='text-align: center; color: #111111; margin-top: 10px; margin-bottom: 5px; font-weight: 800;'>Log In</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #4b5563; font-size: 13px; font-weight: 500; margin-bottom: 30px;'>Aplikasi Prediksi Kadaluwarsa Produk Hortikultura</p>", unsafe_allow_html=True)
     
     in_user = st.text_input("Username", placeholder="Masukkan username anda", key="log_user")
@@ -179,21 +194,26 @@ if st.session_state.halaman == "login":
     
     col_t1, col_b1 = st.columns([1.3, 1])
     with col_t1:
-        st.markdown("<p style='margin-top: 6px; font-size: 14px; color: #374151;'>Have not account?</p>", unsafe_allow_html=True)
+        st.markdown("<p style='margin-top: 6px; font-size: 14px;'>Have not account?</p>", unsafe_allow_html=True)
     with col_b1:
         if st.button("Create Account", use_container_width=True, key="btn_to_signup"):
             st.session_state.halaman = "signup"
             st.rerun()
             
+    # Menutup seluruh tag pembungkus HTML login
     st.markdown('</div></div>', unsafe_allow_html=True)
 
 # ==============================================================================
 # 4. HALAMAN INTERFACE: SIGN UP
 # ==============================================================================
 elif st.session_state.halaman == "signup":
-    st.markdown('<div class="window-container-box"><div class="inner-content">', unsafe_allow_html=True)
+    st.markdown('<div class="app-window">', unsafe_allow_html=True)
+    st.markdown('<div class="circle-top"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="circle-bottom"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="form-safe-content">', unsafe_allow_html=True)
     
-    st.markdown("<h1 style='text-align: center; color: #111111; margin-bottom: 5px; font-weight: 800;'>Sign Up</h1>", unsafe_allow_html=True)
+    # Konten Form Sign Up
+    st.markdown("<h1 style='text-align: center; color: #111111; margin-top: 10px; margin-bottom: 5px; font-weight: 800;'>Sign Up</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #487e47; font-size: 15px; font-weight: bold; margin-bottom: 25px;'>Create an account</p>", unsafe_allow_html=True)
     
     reg_email = st.text_input("Email", placeholder="Masukkan email baru", key="reg_e")
@@ -224,7 +244,7 @@ elif st.session_state.halaman == "signup":
     
     col_t2, col_b2 = st.columns([1.4, 1])
     with col_t2:
-        st.markdown("<p style='margin-top: 6px; font-size: 14px; color: #374151;'>Already have an account?</p>", unsafe_allow_html=True)
+        st.markdown("<p style='margin-top: 6px; font-size: 14px;'>Already have an account?</p>", unsafe_allow_html=True)
     with col_b2:
         if st.button("Log In", use_container_width=True, key="btn_to_login"):
             st.session_state.halaman = "login"
@@ -233,7 +253,7 @@ elif st.session_state.halaman == "signup":
     st.markdown('</div></div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# 5. HALAMAN INTERFACE: DASHBOARD UTAMA MONITORING
+# 5. HALAMAN INTERFACE: DASHBOARD UTAMA MONITORING (TETAP SAMA / TIDAK DIUBAH)
 # ==============================================================================
 elif st.session_state.halaman == "dashboard":
     st.markdown("""
