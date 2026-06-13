@@ -6,12 +6,13 @@ from PIL import Image
 import os
 
 # ==============================================================================
-# CONFIG DATABASE
+# 1. ATUR NAMA DATABASE & INITIALIZATION
 # ==============================================================================
 DB_LOGIN_PATH = "manajemen_akses.db"
 DB_ANALISIS_PATH = "logistik_hortikultura.db"
 
 def init_databases():
+    # Database untuk Login/Register Pengguna
     conn = sqlite3.connect(DB_LOGIN_PATH)
     cursor = conn.cursor()
     cursor.execute("""
@@ -24,6 +25,7 @@ def init_databases():
     conn.commit()
     conn.close()
 
+    # Database untuk Riwayat Scan Hasil Logistik
     conn = sqlite3.connect(DB_ANALISIS_PATH)
     cursor = conn.cursor()
     cursor.execute("""
@@ -38,77 +40,12 @@ def init_databases():
     conn.commit()
     conn.close()
 
+# Jalankan inisialisasi tabel database saat web pertama kali dimuat
 init_databases()
 
-# ==============================================================================
-# CUSTOM DESAIN STYLE (CSS) - Memaksa Tampilan Mirip Desain Aslimu
-# ==============================================================================
-st.set_page_config(page_title="Logistik Hortikultura", page_icon="🌱", layout="wide")
-
-st.markdown("""
-    <style>
-    /* Menghilangkan header default streamlit */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    
-    /* Membuat background halaman abu-abu terang */
-    .stApp {
-        background-color: #f3f3f3 !important;
-    }
-    
-    /* Wadah Utama Login (Kotak Vertikal Tengah) */
-    .login-container {
-        max-width: 480px;
-        margin: 40px auto;
-        padding: 40px 30px;
-        background-color: white;
-        border-radius: 8px;
-        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
-        text-align: center;
-    }
-    
-    /* Styling Teks Judul Hijau Pertanian */
-    .app-title {
-        color: #2e7d32;
-        font-family: sans-serif;
-        font-size: 22px;
-        font-weight: bold;
-        margin-top: 15px;
-        margin-bottom: 30px;
-    }
-    
-    /* Memaksa input text agar melengkung dan rapi */
-    div.stTextInput > div > div > input {
-        border-radius: 4px !important;
-        border: 1px solid #c0c0c0 !important;
-        height: 50px !important;
-        font-size: 15px !important;
-    }
-    
-    /* Mengatur style tombol login biru */
-    .stButton > button {
-        width: 100% !important;
-        height: 50px !important;
-        background-color: #1976d2 !important;
-        color: white !important;
-        font-weight: bold !important;
-        font-size: 15px !important;
-        border-radius: 4px !important;
-        border: none !important;
-        margin-top: 10px;
-    }
-    
-    /* Style khusus tombol daftar */
-    .signup-box button {
-        background-color: #437c37 !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
 
 # ==============================================================================
-# LOGIKA LOGISTIK (OPENCV)
+# 2. LOGIKA UTAMA DETEKSI SAYUR (OPENCV HSV - SAMA SEPERTI VERSI DESKTOP)
 # ==============================================================================
 def rekomendasi_suhu(jenis):
     if jenis == "Wortel": return "0 - 4 °C"
@@ -117,9 +54,11 @@ def rekomendasi_suhu(jenis):
     return "-"
 
 def cek_kondisi_citra(cv_img, jenis):
+    # Resize gambar ke ukuran standar agar pemrosesan stabil di cloud server
     cv_img = cv2.resize(cv_img, (400, 300))
     hsv = cv2.cvtColor(cv2.GaussianBlur(cv_img, (5, 5), 0), cv2.COLOR_BGR2HSV)
     
+    # Ambang batas warna HSV (Orange, Merah, Hijau)
     mask_orange = cv2.inRange(hsv, np.array([4, 65, 45]), np.array([22, 255, 255]))
     mask_red = cv2.bitwise_or(
         cv2.inRange(hsv, np.array([0, 100, 100]), np.array([10, 255, 255])),
@@ -133,7 +72,7 @@ def cek_kondisi_citra(cv_img, jenis):
     pct_green = (cv2.countNonZero(mask_green) / total_piksel) * 100
 
     if max(pct_orange, pct_red, pct_green) < 3:
-        return None, "Objek sayuran tidak terdeteksi jelas.", -1
+        return None, "Objek sayuran tidak terdeteksi dengan jelas.", -1
 
     d = {"Wortel": pct_orange, "Cabai": pct_red, "Brokoli": pct_green}
     warna_dominan = max(d, key=d.get)
@@ -142,6 +81,8 @@ def cek_kondisi_citra(cv_img, jenis):
         return None, f"Salah komoditas! Terdeteksi {warna_dominan}, bukan {jenis}.", -1
 
     mask_clean = mask_orange if jenis == "Wortel" else (mask_red if jenis == "Cabai" else mask_green)
+    
+    # Hitung kecacatan / spot hitam pembusukan
     damage_pct = (cv2.countNonZero(cv2.bitwise_and(cv2.inRange(hsv, np.array([0,0,0]), np.array([180,255,70])), mask_clean)) / cv2.countNonZero(mask_clean)) * 100
     yellow_pct = (cv2.countNonZero(cv2.bitwise_and(cv2.inRange(hsv, np.array([18,40,40]), np.array([40,255,255])), mask_clean)) / cv2.countNonZero(mask_clean)) * 100
     mean_sat = np.mean(hsv[:,:,1])
@@ -161,173 +102,149 @@ def cek_kondisi_citra(cv_img, jenis):
 
 
 # ==============================================================================
-# ALUR HALAMAN (SESSION STATE)
+# 3. ANTARMUKA WEB (INTERFACE STREAMLIT UTANPA TKINTER/PYQT)
 # ==============================================================================
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-if "page_status" not in st.session_state:
-    st.session_state.page_status = "login"  # login atau signup
+st.set_page_config(page_title="Logistik Hortikultura", page_icon="🌱", layout="wide")
 
-# --- 1. TAMPILAN PAGE LOGIN ---
-if not st.session_state.logged_in and st.session_state.page_status == "login":
-    # Membuat grid tengah agar posisi pas di center monitor
-    _, col_center, _ = st.columns([1, 1.2, 1])
+# Gunakan session state web untuk mengingat status login pengguna
+if "terautentikasi" not in st.session_state:
+    st.session_state.terautentikasi = False
+if "user_aktif" not in st.session_state:
+    st.session_state.user_aktif = ""
+
+# --- A. JIKA PENGGUNA BELUM LOGIN ---
+if not st.session_state.terautentikasi:
+    st.title("🌱 Aplikasi Logistik Hortikultura")
     
-    with col_center:
-        st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    # Memanggil file logo kelompokmu yang ada di dalam repository GitHub
+    if os.path.exists("logoo.jpg"):
+        st.image("logoo.jpg", width=110)
         
-        # Tampilkan logo kelompok bulat di atas tengah container
-        if os.path.exists("logoo.jpg"):
-            st.image("logoo.jpg", width=110)
+    pilihan_tab = st.sidebar.radio("Navigasi Akses:", ["Masuk Akun", "Daftar Akun Baru"])
+    
+    if pilihan_tab == "Masuk Akun":
+        st.subheader("Login Form")
+        username_input = st.text_input("Username / Email")
+        password_input = st.text_input("Password", type="password")
+        
+        if st.button("LOG IN", type="primary"):
+            conn = sqlite3.connect(DB_LOGIN_PATH)
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM data_pengguna WHERE email=? AND password=?", (username_input, password_input))
+            user = cursor.fetchone()
+            conn.close()
             
-        st.markdown('<div class="app-title">Aplikasi Hortikultura</div>', unsafe_allow_html=True)
-        
-        login_email = st.text_input("Username", placeholder="Masukkan Username/Email", label_visibility="collapsed")
-        st.write("")
-        login_pass = st.text_input("Password", type="password", placeholder="Masukkan Password", label_visibility="collapsed")
-        
-        if st.button("LOG IN"):
-            if login_email == "" or login_pass == "":
-                st.warning("Data tidak boleh kosong!")
+            if user:
+                st.session_state.terautentikasi = True
+                st.session_state.user_aktif = username_input
+                st.success("Selamat Datang! Login Berhasil.")
+                st.rerun()
             else:
-                conn = sqlite3.connect(DB_LOGIN_PATH)
-                cursor = conn.cursor()
-                cursor.execute("SELECT * FROM data_pengguna WHERE email=? AND password=?", (login_email, login_pass))
-                user = cursor.fetchone()
-                conn.close()
+                st.error("Maaf, Username atau Password salah!")
                 
-                if user:
-                    st.session_state.logged_in = True
-                    st.success("Login Berhasil!")
-                    st.rerun()
-                else:
-                    st.error("Username atau Password Salah!")
-                    
-        st.write("---")
-        st.write("Have not account?")
-        if st.button("Create Account", key="go_signup"):
-            st.session_state.page_status = "signup"
-            st.rerun()
-            
-        st.markdown('</div>', unsafe_allow_html=True)
-
-# --- 2. TAMPILAN PAGE SIGN UP ---
-elif not st.session_state.logged_in and st.session_state.page_status == "signup":
-    _, col_center, _ = st.columns([1, 1.2, 1])
-    
-    with col_center:
-        st.markdown('<div class="login-container signup-box">', unsafe_allow_html=True)
+    elif pilihan_tab == "Daftar Akun Baru":
+        st.subheader("Sign Up Form")
+        new_email = st.text_input("Masukkan Email")
+        new_pass = st.text_input("Masukkan Password", type="password")
+        confirm_pass = st.text_input("Konfirmasi Password", type="password")
         
-        if os.path.exists("logoo.jpg"):
-            st.image("logoo.jpg", width=110)
-            
-        st.markdown('<div class="app-title" style="color:#437c37;">Create Account</div>', unsafe_allow_html=True)
-        
-        reg_email = st.text_input("Email", placeholder="Email", label_visibility="collapsed")
-        st.write("")
-        reg_pass = st.text_input("Password", type="password", placeholder="Password", label_visibility="collapsed")
-        st.write("")
-        reg_confirm = st.text_input("Confirm Password", type="password", placeholder="Confirm Password", label_visibility="collapsed")
-        
-        if st.button("Sign Up"):
-            if reg_email == "" or reg_pass == "":
-                st.warning("Semua data harus diisi!")
-            elif reg_pass != reg_confirm:
-                st.error("Password tidak sama!")
+        if st.button("Register Akun"):
+            if new_email == "" or new_pass == "":
+                st.warning("Form registrasi tidak boleh kosong!")
+            elif new_pass != confirm_pass:
+                st.error("Konfirmasi password tidak cocok!")
             else:
                 try:
                     conn = sqlite3.connect(DB_LOGIN_PATH)
                     cursor = conn.cursor()
-                    cursor.execute("INSERT INTO data_pengguna (email, password) VALUES (?, ?)", (reg_email, reg_pass))
+                    cursor.execute("INSERT INTO data_pengguna (email, password) VALUES (?, ?)", (new_email, new_pass))
                     conn.commit()
                     conn.close()
-                    st.success("Akun berhasil dibuat!")
-                    st.session_state.page_status = "login"
-                    st.rerun()
+                    st.success("Akun sukses dibuat! Silakan pindah ke menu 'Masuk Akun' di sidebar.")
                 except sqlite3.IntegrityError:
-                    st.error("Email sudah digunakan!")
-                    
-        st.write("---")
-        st.write("Already have an account?")
-        if st.button("Log In", key="go_login"):
-            st.session_state.page_status = "login"
-            st.rerun()
-            
-        st.markdown('</div>', unsafe_allow_html=True)
+                    st.error("Email tersebut sudah terdaftar sebelumnya!")
 
-# --- 3. TAMPILAN PAGE DASHBOARD UTAMA (SETELAH LOGIN BERHASIL) ---
+# --- B. JIKA LOGIN SUKSES (MASUK KE DASHBOARD LOGISTIK UTAMA) ---
 else:
-    st.markdown("<div style='background-color:#1b5e20;padding:12px;border-radius:5px'><h2 style='color:white;text-align:center;margin:0;'>OPTIMALISASI DISTRIBUSI LOGISTIK HORTIKULTURA</h2></div>", unsafe_allow_html=True)
+    # Desain Header Atas Web
+    st.markdown("<div style='background-color:#1b5e20;padding:12px;border-radius:4px'><h2 style='color:white;text-align:center;margin:0;'>OPTIMALISASI DISTRIBUSI LOGISTIK HORTIKULTURA</h2></div>", unsafe_allow_html=True)
     
     col_user, col_logout = st.columns([8, 2])
-    col_user.write("Sesi Aktif: **Dashboard Logistik**")
-    if col_logout.button("Log Out", key="logout_act"):
-        st.session_state.logged_in = False
-        st.session_state.page_status = "login"
+    col_user.write(f"Pengguna aktif: **{st.session_state.user_aktif}**")
+    if col_logout.button("Keluar Sesi / Log Out", use_container_width=True):
+        st.session_state.terautentikasi = False
+        st.session_state.user_aktif = ""
         st.rerun()
 
     st.write("---")
-    col_kiri, col_kanan = st.columns([1, 1])
     
-    with col_kiri:
+    # Membagi layout web menjadi 2 kolom (Kiri untuk Scanner, Kanan untuk Dashboard tabel)
+    kolom_kiri, kolom_kanan = st.columns([1, 1])
+    
+    with kolom_kiri:
         st.subheader("📸 Panel Input Scanner")
-        komoditas_pilihan = st.selectbox("Pilih Komoditas", ["Wortel", "Cabai", "Brokoli"])
+        pilih_komoditas = st.selectbox("Komoditas Sayuran:", ["Wortel", "Cabai", "Brokoli"])
         
-        metode_input = st.radio("Metode Pengambilan Gambar:", ["Gunakan Kamera Perangkat", "Unggah Foto dari Galeri"])
+        opsi_kamera = st.radio("Sumber Input Citra:", ["Gunakan Kamera HP/Laptop (Live)", "Unggah File Foto dari Galeri"])
         
-        file_gambar = None
-        if metode_input == "Gunakan Kamera Perangkat":
-            file_gambar = st.camera_input("Ambil Foto Komoditas")
+        file_media = None
+        if opsi_kamera == "Gunakan Kamera HP/Laptop (Live)":
+            file_media = st.camera_input("Arahkan sayuran ke kamera depan")
         else:
-            file_gambar = st.file_uploader("Pilih File Gambar", type=["jpg", "jpeg", "png", "bmp"])
+            file_media = st.file_uploader("Upload Foto Sayur", type=["jpg", "jpeg", "png", "bmp"])
             
-        if file_gambar is not None:
-            image_pil = Image.open(file_gambar)
-            img_np = np.array(image_pil)
+        if file_media is not None:
+            # Konversi file upload menjadi format gambar OpenCV (BGR)
+            img_pil = Image.open(file_media)
+            img_np = np.array(img_pil)
             if len(img_np.shape) == 3 and img_np.shape[2] == 4:
                 img_np = cv2.cvtColor(img_np, cv2.COLOR_RGBA2RGB)
             img_cv = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
             
-            if st.button("Jalankan Analisis", key="run_analisis"):
-                nama, kondisi, sisa = cek_kondisi_citra(img_cv, komoditas_pilihan)
+            if st.button("Jalankan Analisis Kualitas", type="primary", use_container_width=True):
+                nama, kondisi, sisa = cek_kondisi_citra(img_cv, pilih_komoditas)
+                
                 if sisa == -1:
                     st.error(kondisi)
                 else:
-                    suhu_rekomendasi = rekomendasi_suhu(nama)
+                    suhu_ideal = rekomendasi_suhu(nama)
                     sisa_hari = f"{sisa} Hari"
                     
+                    # Simpan data ke database logistik_hortikultura.db
                     conn = sqlite3.connect(DB_ANALISIS_PATH)
                     cursor = conn.cursor()
                     cursor.execute(
                         "INSERT INTO riwayat_pindai (komoditas, kondisi, sisa_segar, suhu_simpan) VALUES (?, ?, ?, ?)",
-                        (nama, kondisi, sisa_hari, suhu_rekomendasi)
+                        (nama, kondisi, sisa_hari, suhu_ideal)
                     )
                     conn.commit()
                     conn.close()
-                    st.success("Analisis Berhasil direkam!")
+                    st.success("Data pemindaian berhasil diproses dan direkam!")
 
-    with col_kanan:
-        st.subheader("📊 Dashboard")
+    with kolom_kanan:
+        st.subheader("📊 Dashboard Utama & Riwayat")
         
+        # Ambil seluruh data dari database untuk ditampilkan ke web secara real-time
         conn = sqlite3.connect(DB_ANALISIS_PATH)
         cursor = conn.cursor()
         cursor.execute("SELECT id, komoditas, kondisi, sisa_segar, suhu_simpan FROM riwayat_pindai ORDER BY id DESC")
-        data_rows = cursor.fetchall()
+        data_db = cursor.fetchall()
         conn.close()
         
-        if data_rows:
-            terbaru = data_rows[0]
+        if data_db:
+            terbaru = data_db[0]
             st.info(f"""
-            **Hasil Pindai Sistem:**
-            * Komoditas : {terbaru[1]}
-            * Kondisi : {terbaru[2]}
-            * Sisa : {terbaru[3]}
-            * Suhu Simpan : {terbaru[4]}
+            **Hasil Pindai Sistem Paling Baru:**
+            * Nama Komoditas : **{terbaru[1]}**
+            * Kondisi Fisik : **{terbaru[2]}**
+            * Estimasi Sisa Segar : **{terbaru[3]}**
+            * Batas Suhu Simpan : **{terbaru[4]}**
             """)
-        
-        import pandas as pd
-        if data_rows:
-            df = pd.DataFrame(data_rows, columns=["ID", "Nama", "Kondisi", "Sisa", "Suhu"])
-            st.dataframe(df, hide_index=True, use_container_width=True)
         else:
-            st.warning("Belum ada data pemindaian.")
+            st.warning("Belum ada riwayat data di database.")
+            
+        st.write("**Tabel Logistik Riwayat Lengkap:**")
+        if data_db:
+            import pandas as pd
+            df_tabel = pd.DataFrame(data_db, columns=["ID Pindai", "Nama", "Kondisi Mutu", "Sisa Hari", "Suhu Rekomendasi"])
+            st.dataframe(df_tabel, hide_index=True, use_container_width=True)
