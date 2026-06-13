@@ -88,92 +88,72 @@ def cek_kondisi_citra(cv_img, jenis):
     return jenis, status, sisa
 
 # ==============================================================================
-# CSS INTERFACE OPTIMIZATION ENGINE
+# CSS CORE REPLICA ENGINE (MENYATUKAN SEMUA ELEMEN KE DALAM KERTAS)
 # ==============================================================================
 st.set_page_config(page_title="Optimalisasi Logistik Pertanian", page_icon="🌱", layout="wide")
 
 st.markdown("""
 <style>
-/* Menyembunyikan komponen navigasi atas bawaan Streamlit */
+/* Sembunyikan Header & Footer Bawaan Streamlit */
 header, footer, [data-testid="stHeader"], [data-testid="stToolbar"] { visibility: hidden !important; height: 0px !important; }
 
-/* Force Background Canvas Desktop (Light Grey) */
+/* Background Dasar Desktop Windows (Abu-abu Terang) */
 .stApp { background-color: #f0f0f0 !important; }
 
-/* RE-DESIGN: Kotak Pembungkus Login/Signup (Container Card) */
-div[data-testid="stVerticalBlockBorderWrapper"]:has(div[id="auth_card_wrapper"]) {
+/* KERTAS PUTIH: Membungkus SEMUA Elemen (Logo, Input, Tombol) Jadi Satu Kesatuan */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(div[id="auth_paper_container"]) {
     background-color: white !important;
-    border: 1px solid #cccccc !important;
+    border: 1px solid #bcbcbc !important;
     border-radius: 8px !important;
-    padding: 25px 35px 30px 35px !important;
-    box-shadow: 0px 4px 15px rgba(0,0,0,0.08) !important;
-    max-width: 420px !important; /* Mengunci lebar form agar tidak melar melebar */
-    margin: 40px auto !important; /* Membuat posisi otomatis berada di tengah halaman */
+    padding: 35px 40px !important;
+    box-shadow: 0px 5px 15px rgba(0,0,0,0.1) !important;
+    max-width: 440px !important;
+    margin: 50px auto !important;
 }
 
-/* Penyesuaian Komponen Input di Dalam Card Auth */
-div[data-testid="stVerticalBlockBorderWrapper"]:has(div[id="auth_card_wrapper"]) div[data-baseweb="input"] {
-    background-color: #ffffff !important;
+/* Memaksa Logo Gambar Agar Selalu Pas di Dalam Kertas */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(div[id="auth_paper_container"]) img {
+    max-width: 130px !important;
+    display: block !important;
+    margin: 0 auto 15px auto !important;
+}
+
+/* Modifikasi Kotak Input Username & Password di Dalam Kertas */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(div[id="auth_paper_container"]) div[data-baseweb="input"] {
+    background-color: white !important;
     border: 1px solid #aaaaaa !important;
     border-radius: 4px !important;
 }
-div[data-testid="stVerticalBlockBorderWrapper"]:has(div[id="auth_card_wrapper"]) input {
-    color: #111111 !important;
-    background-color: #ffffff !important;
+div[data-testid="stVerticalBlockBorderWrapper"]:has(div[id="auth_paper_container"]) input {
+    color: black !important;
     font-size: 15px !important;
 }
-/* Mengubah warna teks placeholder agar terlihat kontras saat kosong */
-div[data-testid="stVerticalBlockBorderWrapper"]:has(div[id="auth_card_wrapper"]) input::placeholder {
+div[data-testid="stVerticalBlockBorderWrapper"]:has(div[id="auth_paper_container"]) input::placeholder {
     color: #757575 !important;
-    opacity: 1 !important;
 }
 
-/* Pengaturan Teks Judul Form */
-.auth-title {
-    text-align: center !important;
-    color: #222222 !important;
-    font-size: 28px !important;
-    font-weight: bold !important;
-    margin: 5px 0px 2px 0px !important;
-}
-.auth-subtitle {
-    text-align: center !important;
-    color: #555555 !important;
-    font-size: 13px !important;
-    font-weight: 500 !important;
-    margin-bottom: 20px !important;
-}
+/* Pengatur Judul Form */
+.auth-title { text-align: center !important; color: black !important; font-size: 30px !important; font-weight: bold !important; margin: 5px 0 2px 0 !important; }
+.auth-subtitle { text-align: center !important; color: #444444 !important; font-size: 13px !important; font-weight: bold !important; margin-bottom: 25px !important; }
 
-/* Modifikasi Tombol Desktop Tradisional */
-div[data-testid="stVerticalBlockBorderWrapper"]:has(div[id="auth_card_wrapper"]) button {
+/* Tombol Log In / Sign Up Standar Tkinter */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(div[id="auth_paper_container"]) button {
     background-color: #e1e1e1 !important;
-    color: #000000 !important;
+    color: black !important;
     border: 1px solid #acacac !important;
     border-radius: 4px !important;
     font-weight: bold !important;
-    height: 38px !important;
 }
-div[data-testid="stVerticalBlockBorderWrapper"]:has(div[id="auth_card_wrapper"]) button:hover {
+div[data-testid="stVerticalBlockBorderWrapper"]:has(div[id="auth_paper_container"]) button:hover {
     background-color: #e5f1fb !important;
     border-color: #0078d7 !important;
 }
 
-/* Teks Tautan Navigasi Bawah Khas Tkinter */
-.auth-footer-nav {
-    text-align: right !important;
-    margin-top: 15px;
-}
-.auth-footer-nav button {
-    background: none !important;
-    border: none !important;
-    color: #0066cc !important;
-    text-decoration: underline !important;
-    font-size: 14px !important;
-    padding: 0 !important;
-    font-weight: normal !important;
-}
+/* Teks Tautan Pemindah Halaman di Pojok Kanan Bawah Kertas */
+.auth-footer-nav { text-align: right !important; margin-top: 20px; }
+.auth-footer-nav button { background: none !important; border: none !important; color: #0066cc !important; text-decoration: underline !important; font-size: 14px !important; padding: 0 !important; font-weight: normal !important; }
 
-/* STYLE DASHBOARD UTAMA */
+/* STYLE UNTUK PANEL UTAMA DASHBOARD */
 .app-header-green {
     background-color: #246329 !important;
     border: 1px solid #18441c;
@@ -229,36 +209,33 @@ if "foto_terpilih" not in st.session_state:
     st.session_state.foto_terpilih = None
 
 # ==============================================================================
-# VIEW 1: REPLIKA KANVAS AUTH (LOGIN / SIGN UP SCREEN)
+# TAMPILAN 1: FORM LOGIN / SIGN UP (PENGGABUNGAN TOTAL DI DALAM SATU KERTAS)
 # ==============================================================================
 if not st.session_state.terautentikasi:
     _, center_col, _ = st.columns([1, 1.1, 1])
     
     with center_col:
-        # Pemicu Struktur Wrapper CSS Card Putih
-        st.markdown('<div id="auth_card_wrapper"></div>', unsafe_allow_html=True)
+        # Pemicu Utama CSS Agar Semua Masuk ke Dalam Satu Kertas Putih
+        st.markdown('<div id="auth_paper_container"></div>', unsafe_allow_html=True)
         
-        # --- SUB-VIEW: LOGIN ---
+        # --- SUB-HALAMAN: LOGIN ---
         if st.session_state.halaman_aktif == "login":
-            # 1. Logo diletakkan paling atas & diperkecil secara proporsional (width=140)
+            # 1. Logo Kelompok Naik ke Paling Atas di Dalam Kertas
             if os.path.exists("logoo.PNG"):
-                img_l, img_c, img_r = st.columns([1, 1.8, 1])
-                with img_c:
-                    st.image("logoo.PNG", width=140)
+                st.image("logoo.PNG")
             else:
-                st.markdown("<div style='height:70px; background:#e0e0e0; text-align:center; padding-top:20px; color:gray; border-radius:4px;'>[ login.jpeg ]</div>", unsafe_allow_html=True)
+                st.markdown("<div style='height:60px; background:#e0e0e0; text-align:center; padding-top:15px; color:gray; margin-bottom:15px;'>[ login.jpeg ]</div>", unsafe_allow_html=True)
             
-            # 2. Judul Form Tepat di Bawah Gambar Logo
             st.markdown("<div class='auth-title'>Log In</div>", unsafe_allow_html=True)
             st.markdown("<div class='auth-subtitle'>Aplikasi Prediksi Kadaluwarsa Produk Hortikultura</div>", unsafe_allow_html=True)
             
-            # 3. Input Form Elemen (Placeholder berada di dalam)
+            # 2. Input Email & Password Berurutan Langsung di Bawah Judul
             username_input = st.text_input("Username", placeholder="Username", label_visibility="collapsed", key="txt_user")
             st.write("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
             password_input = st.text_input("Password", placeholder="Password", type="password", label_visibility="collapsed", key="txt_pass")
             st.write("<br>", unsafe_allow_html=True)
             
-            # 4. Aksi Tombol Log In Tengah
+            # 3. Tombol Eksekusi Masuk Aplikasi
             col_b1, col_b2, col_b3 = st.columns([1, 1.4, 1])
             with col_b2:
                 btn_login = st.button("LOG IN", use_container_width=True)
@@ -275,28 +252,25 @@ if not st.session_state.terautentikasi:
                 else:
                     st.error("Username atau Password Salah")
             
-            # 5. Tautan Navigasi Pembuat Akun di Bagian Paling Bawah Kanan Kotak
+            # 4. Tautan Navigasi Pembuat Akun Baru di Sisi Kanan Bawah Kertas
             st.markdown("<div class='auth-footer-nav'>", unsafe_allow_html=True)
             if st.button("Create Account", key="go_signup"):
                 st.session_state.halaman_aktif = "signup"
                 st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
 
-        # --- SUB-VIEW: SIGN UP ---
+        # --- SUB-HALAMAN: SIGN UP ---
         else:
-            # 1. Logo diletakkan paling atas & diperkecil secara proporsional
+            # 1. Logo Kelompok Naik ke Paling Atas di Dalam Kertas
             if os.path.exists("logoo.PNG"):
-                img_l, img_c, img_r = st.columns([1, 1.8, 1])
-                with img_c:
-                    st.image("logoo.PNG", width=140)
+                st.image("logoo.PNG")
             else:
-                st.markdown("<div style='height:70px; background:#e0e0e0; text-align:center; padding-top:20px; color:gray; border-radius:4px;'>[ signup.jpg ]</div>", unsafe_allow_html=True)
+                st.markdown("<div style='height:60px; background:#e0e0e0; text-align:center; padding-top:15px; color:gray; margin-bottom:15px;'>[ signup.jpg ]</div>", unsafe_allow_html=True)
             
-            # 2. Judul Form Tepat di Bawah Gambar Logo
             st.markdown("<div class='auth-title'>Sign Up</div>", unsafe_allow_html=True)
             st.markdown("<div class='auth-subtitle'>Create an account</div>", unsafe_allow_html=True)
             
-            # 3. Input Form Elemen Berurutan (Placeholder berada di dalam)
+            # 2. Input Registrasi Elemen Berurutan
             reg_email = st.text_input("Email", placeholder="Email", label_visibility="collapsed", key="reg_e")
             st.write("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
             reg_pass = st.text_input("Password", placeholder="Password", type="password", label_visibility="collapsed", key="reg_p")
@@ -304,7 +278,7 @@ if not st.session_state.terautentikasi:
             reg_confirm = st.text_input("Confirm Password", placeholder="Confirm Password", type="password", label_visibility="collapsed", key="reg_c")
             st.write("<br>", unsafe_allow_html=True)
             
-            # 4. Aksi Tombol Registrasi
+            # 3. Tombol Sign Up Registrasi Akun
             col_s1, col_s2, col_s3 = st.columns([1, 1.4, 1])
             with col_s2:
                 btn_signup = st.button("Sign Up", use_container_width=True)
@@ -327,7 +301,7 @@ if not st.session_state.terautentikasi:
                     except:
                         st.error("Email sudah terdaftar")
             
-            # 5. Tautan Navigasi Kembali ke Login di Bagian Paling Bawah Kanan Kotak
+            # 4. Tautan Navigasi Kembali ke Login
             st.markdown("<div class='auth-footer-nav'>", unsafe_allow_html=True)
             if st.button("Log In", key="go_login"):
                 st.session_state.halaman_aktif = "login"
@@ -335,7 +309,7 @@ if not st.session_state.terautentikasi:
             st.markdown("</div>", unsafe_allow_html=True)
 
 # ==============================================================================
-# VIEW 2: PRINCIPAL LOGISTICS DASHBOARD SCREEN
+# TAMPILAN 2: HALAMAN UTAMA LOGISTIK (HAPUS DATA LAMA SAAT DI-ANALISIS)
 # ==============================================================================
 else:
     st.markdown("<div class='app-header-green'>OPTIMALISASI DISTRIBUSI LOGISTIK HORTIKULTURA</div>", unsafe_allow_html=True)
@@ -348,7 +322,7 @@ else:
 
     kolom_kiri, kolom_kanan = st.columns([1, 1.35])
     
-    # ------------------ KOTAK 1: PANEL INPUT SCANNER (KIRI) ------------------
+    # ------------------ PANEL SCANNER (KIRI) ------------------
     with kolom_kiri:
         st.markdown("<div class='group-box'><div class='group-box-title'>Panel Input Scanner</div>", unsafe_allow_html=True)
         st.markdown("<p style='font-weight:bold; margin-bottom:2px;'>Komoditas</p>", unsafe_allow_html=True)
@@ -378,6 +352,7 @@ else:
         btn_eksekusi = st.button("Jalankan Analisis", use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
         
+        # LOGIKA PERBAIKAN: Setiap kali tombol ditekan, bersihkan data lama!
         if btn_eksekusi and st.session_state.foto_terpilih is not None:
             img_np = np.array(st.session_state.foto_terpilih)
             if len(img_np.shape) == 3 and img_np.shape[2] == 4:
@@ -389,8 +364,15 @@ else:
                 st.error(kondisi)
             else:
                 suhu_ideal = rekomendasi_suhu(nama)
+                
+                # Buka koneksi database logistik
                 conn = sqlite3.connect(DB_ANALISIS_PATH)
                 cursor = conn.cursor()
+                
+                # --- BERSIHKAN DATA ANALISIS LAMA AGAR TIDAK MENUMPUK ---
+                cursor.execute("DELETE FROM riwayat_pindai")
+                
+                # Masukkan data pindai yang baru
                 cursor.execute("INSERT INTO riwayat_pindai (komoditas, kondisi, sisa_segar, suhu_simpan) VALUES (?,?,?,?)", (nama, kondisi, f"{sisa} Hari", suhu_ideal))
                 conn.commit()
                 conn.close()
@@ -398,7 +380,7 @@ else:
                 
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # ------------------ KOTAK 2: DASHBOARD OUTPUT (KANAN) ------------------
+    # ------------------ DASHBOARD OUTPUT (KANAN) ------------------
     with kolom_kanan:
         st.markdown("<div class='group-box'><div class='group-box-title'>Dashboard</div>", unsafe_allow_html=True)
         
