@@ -5,14 +5,11 @@ import numpy as np
 from PIL import Image
 import os
 
-# ==============================================================================
-# 1. ATUR NAMA DATABASE & INITIALIZATION
-# ==============================================================================
+# Atur nama database sesuai yang ada di GitHub kamu
 DB_LOGIN_PATH = "manajemen_akses.db"
 DB_ANALISIS_PATH = "logistik_hortikultura.db"
 
 def init_databases():
-    # Database untuk Login/Register Pengguna
     conn = sqlite3.connect(DB_LOGIN_PATH)
     cursor = conn.cursor()
     cursor.execute("""
@@ -25,7 +22,6 @@ def init_databases():
     conn.commit()
     conn.close()
 
-    # Database untuk Riwayat Scan Hasil Logistik
     conn = sqlite3.connect(DB_ANALISIS_PATH)
     cursor = conn.cursor()
     cursor.execute("""
@@ -40,13 +36,8 @@ def init_databases():
     conn.commit()
     conn.close()
 
-# Jalankan inisialisasi tabel database saat web pertama kali dimuat
 init_databases()
 
-
-# ==============================================================================
-# 2. LOGIKA UTAMA DETEKSI SAYUR (OPENCV HSV - SAMA SEPERTI VERSI DESKTOP)
-# ==============================================================================
 def rekomendasi_suhu(jenis):
     if jenis == "Wortel": return "0 - 4 °C"
     elif jenis == "Cabai": return "7 - 10 °C"
@@ -54,11 +45,9 @@ def rekomendasi_suhu(jenis):
     return "-"
 
 def cek_kondisi_citra(cv_img, jenis):
-    # Resize gambar ke ukuran standar agar pemrosesan stabil di cloud server
     cv_img = cv2.resize(cv_img, (400, 300))
     hsv = cv2.cvtColor(cv2.GaussianBlur(cv_img, (5, 5), 0), cv2.COLOR_BGR2HSV)
     
-    # Ambang batas warna HSV (Orange, Merah, Hijau)
     mask_orange = cv2.inRange(hsv, np.array([4, 65, 45]), np.array([22, 255, 255]))
     mask_red = cv2.bitwise_or(
         cv2.inRange(hsv, np.array([0, 100, 100]), np.array([10, 255, 255])),
@@ -81,8 +70,6 @@ def cek_kondisi_citra(cv_img, jenis):
         return None, f"Salah komoditas! Terdeteksi {warna_dominan}, bukan {jenis}.", -1
 
     mask_clean = mask_orange if jenis == "Wortel" else (mask_red if jenis == "Cabai" else mask_green)
-    
-    # Hitung kecacatan / spot hitam pembusukan
     damage_pct = (cv2.countNonZero(cv2.bitwise_and(cv2.inRange(hsv, np.array([0,0,0]), np.array([180,255,70])), mask_clean)) / cv2.countNonZero(mask_clean)) * 100
     yellow_pct = (cv2.countNonZero(cv2.bitwise_and(cv2.inRange(hsv, np.array([18,40,40]), np.array([40,255,255])), mask_clean)) / cv2.countNonZero(mask_clean)) * 100
     mean_sat = np.mean(hsv[:,:,1])
@@ -100,25 +87,19 @@ def cek_kondisi_citra(cv_img, jenis):
 
     return jenis, status, sisa
 
-
-# ==============================================================================
-# 3. ANTARMUKA WEB (INTERFACE STREAMLIT UTANPA TKINTER/PYQT)
-# ==============================================================================
 st.set_page_config(page_title="Logistik Hortikultura", page_icon="🌱", layout="wide")
 
-# Gunakan session state web untuk mengingat status login pengguna
 if "terautentikasi" not in st.session_state:
     st.session_state.terautentikasi = False
 if "user_aktif" not in st.session_state:
     st.session_state.user_aktif = ""
 
-# --- A. JIKA PENGGUNA BELUM LOGIN ---
 if not st.session_state.terautentikasi:
     st.title("🌱 Aplikasi Logistik Hortikultura")
     
-    # Memanggil file logo kelompokmu yang ada di dalam repository GitHub
-    if os.path.exists("logoo.jpg"):
-        st.image("logoo.jpg", width=110)
+    # Sesuaikan dengan nama file logomu di GitHub (logoo.PNG)
+    if os.path.exists("logoo.PNG"):
+        st.image("logoo.PNG", width=110)
         
     pilihan_tab = st.sidebar.radio("Navigasi Akses:", ["Masuk Akun", "Daftar Akun Baru"])
     
@@ -160,13 +141,11 @@ if not st.session_state.terautentikasi:
                     cursor.execute("INSERT INTO data_pengguna (email, password) VALUES (?, ?)", (new_email, new_pass))
                     conn.commit()
                     conn.close()
-                    st.success("Akun sukses dibuat! Silakan pindah ke menu 'Masuk Akun' di sidebar.")
+                    st.success("Akun sukses dibuat! Silakan pindah ke menu 'Masuk Akun'.")
                 except sqlite3.IntegrityError:
                     st.error("Email tersebut sudah terdaftar sebelumnya!")
 
-# --- B. JIKA LOGIN SUKSES (MASUK KE DASHBOARD LOGISTIK UTAMA) ---
 else:
-    # Desain Header Atas Web
     st.markdown("<div style='background-color:#1b5e20;padding:12px;border-radius:4px'><h2 style='color:white;text-align:center;margin:0;'>OPTIMALISASI DISTRIBUSI LOGISTIK HORTIKULTURA</h2></div>", unsafe_allow_html=True)
     
     col_user, col_logout = st.columns([8, 2])
@@ -177,14 +156,11 @@ else:
         st.rerun()
 
     st.write("---")
-    
-    # Membagi layout web menjadi 2 kolom (Kiri untuk Scanner, Kanan untuk Dashboard tabel)
     kolom_kiri, kolom_kanan = st.columns([1, 1])
     
     with kolom_kiri:
         st.subheader("📸 Panel Input Scanner")
         pilih_komoditas = st.selectbox("Komoditas Sayuran:", ["Wortel", "Cabai", "Brokoli"])
-        
         opsi_kamera = st.radio("Sumber Input Citra:", ["Gunakan Kamera HP/Laptop (Live)", "Unggah File Foto dari Galeri"])
         
         file_media = None
@@ -194,7 +170,6 @@ else:
             file_media = st.file_uploader("Upload Foto Sayur", type=["jpg", "jpeg", "png", "bmp"])
             
         if file_media is not None:
-            # Konversi file upload menjadi format gambar OpenCV (BGR)
             img_pil = Image.open(file_media)
             img_np = np.array(img_pil)
             if len(img_np.shape) == 3 and img_np.shape[2] == 4:
@@ -203,18 +178,16 @@ else:
             
             if st.button("Jalankan Analisis Kualitas", type="primary", use_container_width=True):
                 nama, kondisi, sisa = cek_kondisi_citra(img_cv, pilih_komoditas)
-                
                 if sisa == -1:
                     st.error(kondisi)
                 else:
                     suhu_ideal = rekomendasi_suhu(nama)
                     sisa_hari = f"{sisa} Hari"
                     
-                    # Simpan data ke database logistik_hortikultura.db
                     conn = sqlite3.connect(DB_ANALISIS_PATH)
                     cursor = conn.cursor()
                     cursor.execute(
-                        "INSERT INTO riwayat_pindai (komoditas, kondisi, sisa_segar, suhu_simpan) VALUES (?, ?, ?, ?)",
+                        "INSERT INTO riwayat_pindai (komoditas, kondisi, sisa_segar, suhu_simpan) VALUES (?,?,?,?)",
                         (nama, kondisi, sisa_hari, suhu_ideal)
                     )
                     conn.commit()
@@ -223,8 +196,6 @@ else:
 
     with kolom_kanan:
         st.subheader("📊 Dashboard Utama & Riwayat")
-        
-        # Ambil seluruh data dari database untuk ditampilkan ke web secara real-time
         conn = sqlite3.connect(DB_ANALISIS_PATH)
         cursor = conn.cursor()
         cursor.execute("SELECT id, komoditas, kondisi, sisa_segar, suhu_simpan FROM riwayat_pindai ORDER BY id DESC")
