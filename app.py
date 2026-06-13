@@ -106,44 +106,43 @@ st.markdown("""
     }
     header { visibility: hidden; }
     
-    /* Lingkaran Hijau Kanan Atas */
+    /* Ornamen Lingkaran Hijau Kanan Atas */
     .bg-circle-top-right {
         position: fixed;
-        width: 450px;
-        height: 450px;
+        width: 440px;
+        height: 440px;
         background-color: #527a4d;
         border-radius: 50%;
-        top: -180px;
-        right: -120px;
+        top: -160px;
+        right: -110px;
         z-index: 0;
     }
 
-    /* Lingkaran Hijau Kiri Bawah */
+    /* Ornamen Lingkaran Hijau Kiri Bawah */
     .bg-circle-bottom-left {
         position: fixed;
-        width: 450px;
-        height: 450px;
+        width: 440px;
+        height: 440px;
         background-color: #527a4d;
         border-radius: 50%;
-        bottom: -180px;
-        left: -120px;
+        bottom: -160px;
+        left: -110px;
         z-index: 0;
     }
 
     .login-container {
         position: relative;
         z-index: 10;
-        max-width: 460px;
+        max-width: 440px;
         margin: 0 auto;
         padding-top: 10px;
     }
     
-    /* Container pembungkus logo baru agar pas di tengah atas form */
     .logo-wrapper {
         display: flex;
         justify-content: center;
         align-items: center;
-        margin: 0 auto 10px auto;
+        margin: 0 auto 5px auto;
         width: 100%;
     }
     
@@ -155,8 +154,8 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Nama file logo baru Anda (Pastikan gambarnya sudah disimpan dengan nama ini di folder proyek)
-NAMA_FILE_LOGO = "logo.png"
+# Nama file disesuaikan dengan struktur repository GitHub Anda (logoo.PNG)
+NAMA_FILE_LOGO = "logoo.PNG"
 
 # ==============================================================================
 # 3. HALAMAN INTERFACE: LOG IN
@@ -165,29 +164,28 @@ if st.session_state.halaman == "login":
     st.markdown('<div class="bg-circle-top-right"></div>', unsafe_allow_html=True)
     st.markdown('<div class="bg-circle-bottom-left"></div>', unsafe_allow_html=True)
     
-    col_space1, col_center, col_space2 = st.columns([1.2, 1, 1.2])
+    col_space1, col_center, col_space2 = st.columns([1.1, 1, 1.1])
     
     with col_center:
         st.markdown('<div class="login-container">', unsafe_allow_html=True)
         
-        # MENAMPILKAN LOGO BARU DI TENGAH (Pemberitahuan teks jika file belum ditaruh)
+        # MENAMPILKAN LOGO DI TENGAH SEBELUM JUDUL FORM
         st.markdown('<div class="logo-wrapper">', unsafe_allow_html=True)
         if os.path.exists(NAMA_FILE_LOGO):
             img_real_logo = Image.open(NAMA_FILE_LOGO)
-            st.image(img_real_logo, width=260)
+            st.image(img_real_logo, width=250)
         else:
-            st.warning(f"Simpan file logo baru Anda dengan nama '{NAMA_FILE_LOGO}' di folder script ini.")
+            st.warning(f"File '{NAMA_FILE_LOGO}' tidak ditemukan di direktori aktif.")
         st.markdown('</div>', unsafe_allow_html=True)
         
-        st.markdown("<h1 style='text-align: center; color: #000000; font-size: 52px; font-weight: bold; margin-top: 0px; margin-bottom: 0px;'>Log In</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #000000; font-size: 15px; font-weight: bold; margin-bottom: 40px;'>Aplikasi Prediksi Kadaluwarsa Produk Hortikultura</p>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #000000; font-size: 50px; font-weight: bold; margin-top: 5px; margin-bottom: 25px;'>Log In</h1>", unsafe_allow_html=True)
         
         in_user = st.text_input("Username", placeholder="Masukkan username anda", key="log_user")
         in_pass = st.text_input("Password", placeholder="Masukkan password anda", type="password", key="log_pass")
         
         st.markdown("<br>", unsafe_allow_html=True)
         
-        col_btn_center_l, col_btn_center_m, col_btn_center_r = st.columns([1, 1.2, 1])
+        col_btn_center_l, col_btn_center_m, col_btn_center_r = st.columns([1, 1.3, 1])
         with col_btn_center_m:
             btn_login_click = st.button("LOG IN", use_container_width=True)
             
@@ -206,9 +204,9 @@ if st.session_state.halaman == "login":
                 
         st.markdown("<br><br>", unsafe_allow_html=True)
         
-        col_text_footer, col_btn_footer = st.columns([1.5, 1])
+        col_text_footer, col_btn_footer = st.columns([1.4, 1])
         with col_text_footer:
-            st.markdown("<p style='color: #000000; font-size: 16px; font-weight: 500; text-align: right; margin-top: 5px;'>Have not account?</p>", unsafe_allow_html=True)
+            st.markdown("<p style='color: #000000; font-size: 15px; font-weight: 500; text-align: right; margin-top: 5px;'>Have not account?</p>", unsafe_allow_html=True)
         with col_btn_footer:
             if st.button("Create Account", use_container_width=True, key="btn_to_signup"):
                 st.session_state.halaman = "signup"
@@ -223,22 +221,21 @@ elif st.session_state.halaman == "signup":
     st.markdown('<div class="bg-circle-top-right"></div>', unsafe_allow_html=True)
     st.markdown('<div class="bg-circle-bottom-left"></div>', unsafe_allow_html=True)
     
-    col_space1, col_center, col_space2 = st.columns([1.2, 1, 1.2])
+    col_space1, col_center, col_space2 = st.columns([1.1, 1, 1.1])
     
     with col_center:
         st.markdown('<div class="login-container">', unsafe_allow_html=True)
         
-        # MENAMPILKAN LOGO BARU DI TENGAH
+        # MENAMPILKAN LOGO DI TENGAH SEBELUM JUDUL FORM
         st.markdown('<div class="logo-wrapper">', unsafe_allow_html=True)
         if os.path.exists(NAMA_FILE_LOGO):
             img_real_logo = Image.open(NAMA_FILE_LOGO)
-            st.image(img_real_logo, width=260)
+            st.image(img_real_logo, width=250)
         else:
-            st.warning(f"Simpan file logo baru Anda dengan nama '{NAMA_FILE_LOGO}' di folder script ini.")
+            st.warning(f"File '{NAMA_FILE_LOGO}' tidak ditemukan di direktori aktif.")
         st.markdown('</div>', unsafe_allow_html=True)
         
-        st.markdown("<h1 style='text-align: center; color: #000000; font-size: 52px; font-weight: bold; margin-top: 0px; margin-bottom: 0px;'>Sign Up</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #527a4d; font-size: 15px; font-weight: bold; margin-bottom: 30px;'>Create an account</p>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #000000; font-size: 50px; font-weight: bold; margin-top: 5px; margin-bottom: 25px;'>Sign Up</h1>", unsafe_allow_html=True)
         
         reg_email = st.text_input("Email", placeholder="Masukkan email baru", key="reg_e")
         reg_pass1 = st.text_input("Password", placeholder="Buat kata sandi", type="password", key="reg_p1")
@@ -246,7 +243,7 @@ elif st.session_state.halaman == "signup":
         
         st.markdown("<br>", unsafe_allow_html=True)
         
-        col_btn_center_l, col_btn_center_m, col_btn_center_r = st.columns([1, 1.2, 1])
+        col_btn_center_l, col_btn_center_m, col_btn_center_r = st.columns([1, 1.3, 1])
         with col_btn_center_m:
             btn_signup_click = st.button("Sign Up", use_container_width=True)
             
@@ -270,9 +267,9 @@ elif st.session_state.halaman == "signup":
                     
         st.markdown("<br><br>", unsafe_allow_html=True)
         
-        col_text_footer, col_btn_footer = st.columns([1.5, 1])
+        col_text_footer, col_btn_footer = st.columns([1.4, 1])
         with col_text_footer:
-            st.markdown("<p style='color: #000000; font-size: 16px; font-weight: 500; text-align: right; margin-top: 5px;'>Already have an account?</p>", unsafe_allow_html=True)
+            st.markdown("<p style='color: #000000; font-size: 15px; font-weight: 500; text-align: right; margin-top: 5px;'>Already have an account?</p>", unsafe_allow_html=True)
         with col_btn_footer:
             if st.button("Log In", use_container_width=True, key="btn_to_login"):
                 st.session_state.halaman = "login"
