@@ -6,6 +6,7 @@ from PIL import Image
 import tempfile
 import os
 import base64
+from io import BytesIO
 
 # Konfigurasi dasar page Streamlit wide
 st.set_page_config(page_title="Optimalisasi Logistik Pertanian", layout="wide")
@@ -13,15 +14,21 @@ st.set_page_config(page_title="Optimalisasi Logistik Pertanian", layout="wide")
 DB_LOGIN = "manajemen_akses.db"
 DB_ANALISIS = "logistik_hortikultura.db"
 
-# Fungsi membaca file logo baru logoo.jpg secara lokal
-def get_base64_image(image_path):
+# Fungsi membaca file logo secara aman menggunakan PIL + Base64
+def get_base64_logo(image_path):
     if os.path.exists(image_path):
-        with open(image_path, "rb") as img_file:
-            return f"data:image/jpeg;base64,{base64.b64encode(img_file.read()).decode()}"
+        try:
+            img = Image.open(image_path)
+            buffered = BytesIO()
+            img.save(buffered, format="PNG")
+            img_str = base64.b64encode(buffered.getvalue()).decode()
+            return f"data:image/png;base64,{img_str}"
+        except Exception as e:
+            return "https://via.placeholder.com/150"
     return "https://via.placeholder.com/150"
 
-# Memanggil logo baru kelompokmu
-LOGO_BASE64 = get_base64_image("logoo.jpg")
+# Mengonversi file logoo.jpg
+LOGO_BASE64 = get_base64_logo("logoo.jpg")
 
 # =========================================================
 # DATABASE INITIALIZATION
@@ -139,11 +146,11 @@ def cek_kondisi_roi(path_gambar, jenis):
 if "login" not in st.session_state: st.session_state.login = False
 if "page" not in st.session_state: st.session_state.page = "Login"
 if "hasil" not in st.session_state:
-    st.session_state.hasil = {"komoditas": "Belum Ada", "kondisi": "Menunggu Pindai", "sisa": "-", "suhu": "-"}
+    st.session_state.hasil = {"komoditas": "-", "kondisi": "Menunggu Analisis", "sisa": "-", "suhu": "-"}
 if "riwayat_session" not in st.session_state: 
     st.session_state.riwayat_session = []
 
-# Hilangkan header bawaan streamlit
+# Sembunyikan elemen header default Streamlit agar terlihat clean
 st.markdown("<style>header[data-testid='stHeader'] {display:none;}</style>", unsafe_allow_html=True)
 
 # =========================================================
@@ -192,8 +199,8 @@ if not st.session_state.login and st.session_state.page == "Login":
             margin-bottom: 20px;
         }}
         .logo-img-custom {{
-            width: 85px;
-            height: 85px;
+            width: 90px;
+            height: 90px;
             object-fit: contain;
             margin-right: 15px;
         }}
@@ -277,8 +284,8 @@ elif not st.session_state.login and st.session_state.page == "Sign Up":
             margin-top: 20px;
         }}
         .logo-bottom-img {{
-            width: 80px;
-            height: 80px;
+            width: 85px;
+            height: 85px;
             object-fit: contain;
         }}
     </style>
@@ -330,16 +337,16 @@ else:
             text-align: center;
             padding: 8px 0px;
             letter-spacing: 0.5px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             border: 1px solid #113f15;
         }
 
         .group-box-panel {
-            border: 1px solid #adadad;
-            background-color: #fcfcfc;
-            padding: 20px;
-            border-radius: 4px;
-            margin-bottom: 20px;
+            border: 1px solid #adadad !important;
+            background-color: #fcfcfc !important;
+            padding: 20px !important;
+            border-radius: 4px !important;
+            margin-bottom: 15px !important;
         }
         
         .group-box-title {
@@ -359,7 +366,7 @@ else:
         .qt-preview-box {
             background-color: #e9e9e9;
             border: 1px solid #b0b0b0;
-            height: 220px;
+            height: 200px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -372,19 +379,18 @@ else:
         .qt-terminal-result {
             background-color: #ffffff;
             border: 1px solid #a0a0a0;
-            padding: 15px 30px;
+            padding: 15px 25px;
             font-family: 'Courier New', Courier, monospace;
             font-size: 15px;
             font-weight: bold;
             color: #000000;
             white-space: pre;
             line-height: 1.4;
-            margin: 10px auto;
+            margin-bottom: 15px;
             width: 100%;
-            box-sizing: border-box;
         }
 
-        /* Desain tombol flat presisi masuk ke dalam container box */
+        /* Tombol Flat Sesuai Tampilan UI Qt Designer */
         .stButton>button {
             border-radius: 0px !important;
             font-family: sans-serif !important;
@@ -404,115 +410,116 @@ else:
     <div class="qt-main-header">OPTIMALISASI DISTRIBUSI LOGISTIK HORTIKULTURA</div>
     """, unsafe_allow_html=True)
 
+    # Inisialisasi Kolom Sejajar (Kiri dan Kanan)
     col_kiri, col_kanan = st.columns([1, 1.3], gap="large")
 
     # PANEL KIRI: PANEL INPUT SCANNER
     with col_kiri:
-        # Mengunci semua komponen input scanner di dalam satu container box murni
-        with st.container():
-            st.markdown('<div class="group-box-panel"><div class="group-box-title">Panel Input Scanner</div>', unsafe_allow_html=True)
-            
-            komoditas = st.selectbox("Pilih Komoditas:", ["Wortel", "Cabai", "Brokoli"])
-            opsi_input = st.radio("Metode Ambil Gambar:", ["Kamera Laptop / HP", "Unggah Gambar dari File"])
-            
-            active_file = None
-            if opsi_input == "Kamera Laptop / HP":
-                active_file = st.camera_input("Ambil foto objek", label_visibility="collapsed")
-            else:
-                active_file = st.file_uploader("Pilih file foto (.jpg, .png)", type=["jpg", "jpeg", "png"])
+        st.markdown('<div class="group-box-panel"><div class="group-box-title">Panel Input Scanner</div>', unsafe_allow_html=True)
+        
+        komoditas = st.selectbox("Pilih Komoditas:", ["Wortel", "Cabai", "Brokoli"])
+        opsi_input = st.radio("Metode Ambil Gambar:", ["Kamera Laptop / HP", "Unggah Gambar dari File"])
+        
+        active_file = None
+        if opsi_input == "Kamera Laptop / HP":
+            active_file = st.camera_input("Ambil foto objek", label_visibility="collapsed")
+        else:
+            active_file = st.file_uploader("Pilih file foto (.jpg, .png)", type=["jpg", "jpeg", "png"])
 
-            if active_file:
-                st.image(active_file, use_container_width=True)
-            else:
-                st.markdown('<div class="qt-preview-box">[ Kamera Belum Aktif / Gambar Kosong ]</div>', unsafe_allow_html=True)
+        if active_file:
+            st.image(active_file, use_container_width=True)
+        else:
+            st.markdown('<div class="qt-preview-box">[ Kamera Belum Aktif / Gambar Kosong ]</div>', unsafe_allow_html=True)
 
-            # Sistem Grid Tombol Aksi Internal Box
-            cb1, cb2 = st.columns(2)
-            with cb1:
-                st.markdown('<div class="col-blue-btn">', unsafe_allow_html=True)
-                btn_cam = st.button("Buka Kamera", key="k1")
-                st.markdown('</div>', unsafe_allow_html=True)
-            with cb2:
-                st.markdown('<div class="col-orange-btn">', unsafe_allow_html=True)
-                btn_gal = st.button("Pilih Foto dari Galeri", key="k2")
-                st.markdown('</div>', unsafe_allow_html=True)
-
-            st.write("")
-            cb3, cb4 = st.columns(2)
-            with cb3:
-                st.markdown('<div class="col-purple-btn">', unsafe_allow_html=True)
-                btn_roi = st.button("Tandai Area Sayur (ROI)", key="k3")
-                st.markdown('</div>', unsafe_allow_html=True)
-            with cb4:
-                st.markdown('<div class="col-green-btn">', unsafe_allow_html=True)
-                jalankan_analisis = st.button("Jalankan Analisis", key="k4")
-                st.markdown('</div>', unsafe_allow_html=True)
-                
+        # Baris Tombol Pertama
+        cb1, cb2 = st.columns(2)
+        with cb1:
+            st.markdown('<div class="col-blue-btn">', unsafe_allow_html=True)
+            btn_cam = st.button("Buka Kamera", key="btn_buka_kamera")
             st.markdown('</div>', unsafe_allow_html=True)
+        with cb2:
+            st.markdown('<div class="col-orange-btn">', unsafe_allow_html=True)
+            btn_gal = st.button("Pilih Foto dari Galeri", key="btn_pilih_galeri")
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        st.write("")
+        
+        # Baris Tombol Kedua
+        cb3, cb4 = st.columns(2)
+        with cb3:
+            st.markdown('<div class="col-purple-btn">', unsafe_allow_html=True)
+            btn_roi = st.button("Tandai Area Sayur (ROI)", key="btn_roi_sayur")
+            st.markdown('</div>', unsafe_allow_html=True)
+        with cb4:
+            st.markdown('<div class="col-green-btn">', unsafe_allow_html=True)
+            jalankan_analisis = st.button("Jalankan Analisis", key="btn_run_analisis")
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+        st.markdown('</div>', unsafe_allow_html=True)
 
     # PANEL KANAN: PANEL DASHBOARD UTAMA
     with col_kanan:
-        with st.container():
-            st.markdown('<div class="group-box-panel"><div class="group-box-title">Dashboard</div>', unsafe_allow_html=True)
-            
-            if jalankan_analisis:
-                if active_file is None:
-                    st.warning("Mohon unggah atau ambil gambar terlebih dahulu!")
+        st.markdown('<div class="group-box-panel"><div class="group-box-title">Dashboard</div>', unsafe_allow_html=True)
+        
+        if jalankan_analisis:
+            if active_file is None:
+                st.warning("Mohon unggah atau ambil gambar terlebih dahulu!")
+            else:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp_file:
+                    tmp_file.write(active_file.getbuffer())
+                    path_img = tmp_file.name
+                
+                nama_veg, kond_veg, sisa_hari = cek_kondisi_roi(path_img, komoditas)
+                
+                if nama_veg == "Error_Komoditas":
+                    st.error(f"Peringatan: {kond_veg}")
+                    st.session_state.hasil = {"komoditas": "-", "kondisi": "Salah Pilih Komoditas", "sisa": "-", "suhu": "-"}
+                elif sisa_hari == -1:
+                    st.warning(f"Perhatian: {kond_veg}")
+                    st.session_state.hasil = {"komoditas": "-", "kondisi": "Objek Tidak Dikenali", "sisa": "-", "suhu": "-"}
                 else:
-                    with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp_file:
-                        tmp_file.write(active_file.getbuffer())
-                        path_img = tmp_file.name
+                    suhu_rekom = rekomendasi_suhu(nama_veg)
+                    string_sisa = f"{sisa_hari} Hari"
                     
-                    nama_veg, kond_veg, sisa_hari = cek_kondisi_roi(path_img, komoditas)
+                    st.session_state.hasil = {
+                        "komoditas": nama_veg,
+                        "kondisi": kond_veg,
+                        "sisa": string_sisa,
+                        "suhu": suhu_rekom
+                    }
                     
-                    if nama_veg == "Error_Komoditas":
-                        st.error(f"Peringatan: {kond_veg}")
-                        st.session_state.hasil = {"komoditas": "-", "kondisi": "Salah Pilih Komoditas", "sisa": "-", "suhu": "-"}
-                    elif sisa_hari == -1:
-                        st.warning(f"Perhatian: {kond_veg}")
-                        st.session_state.hasil = {"komoditas": "-", "kondisi": "Objek Tidak Dikenali", "sisa": "-", "suhu": "-"}
-                    else:
-                        suhu_rekom = rekomendasi_suhu(nama_veg)
-                        string_sisa = f"{sisa_hari} Hari"
-                        
-                        st.session_state.hasil = {
-                            "komoditas": nama_veg,
-                            "kondisi": kond_veg,
-                            "sisa": string_sisa,
-                            "suhu": suhu_rekom
-                        }
-                        
-                        try:
-                            conn = sqlite3.connect(DB_ANALISIS)
-                            cur = conn.cursor()
-                            cur.execute("INSERT INTO riwayat_pindai (komoditas, kondisi, sisa_segar, suhu_simpan) VALUES (?, ?, ?, ?)", 
-                                        (nama_veg, kond_veg, string_sisa, suhu_rekom))
-                            conn.commit()
-                            conn.close()
-                        except:
-                            pass
-                        
-                        new_id = len(st.session_state.riwayat_session) + 1
-                        st.session_state.riwayat_session.append((new_id, nama_veg, kond_veg, string_sisa, suhu_rekom))
+                    try:
+                        conn = sqlite3.connect(DB_ANALISIS)
+                        cur = conn.cursor()
+                        cur.execute("INSERT INTO riwayat_pindai (komoditas, kondisi, sisa_segar, suhu_simpan) VALUES (?, ?, ?, ?)", 
+                                    (nama_veg, kond_veg, string_sisa, suhu_rekom))
+                        conn.commit()
+                        conn.close()
+                    except:
+                        pass
+                    
+                    new_id = len(st.session_state.riwayat_session) + 1
+                    st.session_state.riwayat_session.append((new_id, nama_veg, kond_veg, string_sisa, suhu_rekom))
 
-            # Terminal Output Pengukuran Realtime
-            res = st.session_state.hasil
-            text_output = f"""Hasil Pindai Sistem Monitor
+        # Output Terminal Hasil Pindai (Selalu Terkunci di Atas Tabel)
+        res = st.session_state.hasil
+        text_output = f"""Hasil Pindai Sistem Monitor
 ======================================
 Komoditas Terpilih : {res["komoditas"]}
 Status Kondisi     : {res["kondisi"]}
 Estimasi Kadaluwarsa  : {res["sisa"]}
 Rekomendasi Suhu   : {res["suhu"]}"""
-            
-            st.markdown(f'<div class="qt-terminal-result">{text_output}</div>', unsafe_allow_html=True)
-            
-            st.write("### Tabel Log Aktivitas Logistik")
-            # Tabel Riwayat Log aktivitas scan
-            st.dataframe(
-                st.session_state.riwayat_session,
-                use_container_width=True,
-                hide_index=True,
-                column_config={0: "ID", 1: "Komoditas", 2: "Kondisi Objek", 3: "Sisa Umur", 4: "Suhu Simpan"}
-            )
-            
-            st.markdown('</div>', unsafe_allow_html=True)
+        
+        st.markdown(f'<div class="qt-terminal-result">{text_output}</div>', unsafe_allow_html=True)
+        
+        st.write("### Tabel Log Aktivitas Logistik")
+        
+        # Tabel Riwayat aktivitas scan terikat rapi ke dashboard kanan
+        st.dataframe(
+            st.session_state.riwayat_session,
+            use_container_width=True,
+            hide_index=True,
+            column_config={0: "ID", 1: "Komoditas", 2: "Kondisi Objek", 3: "Sisa Umur", 4: "Suhu Simpan"}
+        )
+        
+        st.markdown('</div>', unsafe_allow_html=True)
