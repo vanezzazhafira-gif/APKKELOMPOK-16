@@ -150,7 +150,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 3. HALAMAN INTERFACE: LOG IN (VERSI GAMBAR NOMOR 1)
+# 3. HALAMAN INTERFACE: LOG IN (MENGGUNAKAN LOGO BARU GAMBAR 2)
 # ==============================================================================
 if st.session_state.halaman == "login":
     # Memasang Background Lingkaran Statis
@@ -163,19 +163,17 @@ if st.session_state.halaman == "login":
     with col_center:
         st.markdown('<div class="login-container">', unsafe_allow_html=True)
         
-        # 1. Logo Pojok Kiri Atas (Menggunakan kolom mini)
-        col_logo, col_empty = st.columns([1, 2])
-        with col_logo:
-            try:
-                # Membuka file logo asli kamu secara otomatis
-                img_real_logo = Image.open("logo.png")
-                st.image(img_real_logo, use_container_width=True)
-            except Exception:
-                # Fallback tulisan jika file logo tidak sengaja terhapus/belum ditaruh folder
-                st.markdown("<p style='font-size:35px; margin:0;'>🥦</p>", unsafe_allow_html=True)
+        # PERBAIKAN LOGO GAMBAR 2: Menggunakan container utuh tanpa dibatasi kolom kanan kiri 
+        # sehingga teks "OPTIMALISASI LOGISTIK PERTANYAAN" di bawah logo terbaca penuh.
+        try:
+            img_real_logo = Image.open("logo.png")
+            st.image(img_real_logo, width=280)
+        except Exception:
+            # Fallback jika file logo rusak/hilang
+            st.markdown("<p style='font-size:35px; margin:0;'>🥦</p>", unsafe_allow_html=True)
         
         # 2. Judul Teks Tengah
-        st.markdown("<h1 style='text-align: center; color: #000000; font-size: 52px; font-weight: bold; margin-top: 5px; margin-bottom: 0px;'>Log In</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #000000; font-size: 52px; font-weight: bold; margin-top: 20px; margin-bottom: 0px;'>Log In</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; color: #000000; font-size: 15px; font-weight: bold; margin-bottom: 40px;'>Aplikasi Prediksi Kadaluwarsa Produk Hortikultura</p>", unsafe_allow_html=True)
         
         # 3. Kolom Input Data
@@ -216,7 +214,7 @@ if st.session_state.halaman == "login":
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. HALAMAN INTERFACE: SIGN UP (MENYESUAIKAN DESAIN NOMOR 1)
+# 4. HALAMAN INTERFACE: SIGN UP (MENGGUNAKAN LOGO BARU GAMBAR 2)
 # ==============================================================================
 elif st.session_state.halaman == "signup":
     st.markdown('<div class="bg-circle-top-right"></div>', unsafe_allow_html=True)
@@ -227,15 +225,14 @@ elif st.session_state.halaman == "signup":
     with col_center:
         st.markdown('<div class="login-container">', unsafe_allow_html=True)
         
-        col_logo, col_empty = st.columns([1, 2])
-        with col_logo:
-            try:
-                img_real_logo = Image.open("logo.png")
-                st.image(img_real_logo, use_container_width=True)
-            except Exception:
-                st.markdown("<p style='font-size:35px; margin:0;'>🥦</p>", unsafe_allow_html=True)
+        # Penyesuaian Logo Gambar 2 pada halaman registrasi
+        try:
+            img_real_logo = Image.open("logo.png")
+            st.image(img_real_logo, width=280)
+        except Exception:
+            st.markdown("<p style='font-size:35px; margin:0;'>🥦</p>", unsafe_allow_html=True)
         
-        st.markdown("<h1 style='text-align: center; color: #000000; font-size: 52px; font-weight: bold; margin-top: 5px; margin-bottom: 0px;'>Sign Up</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #000000; font-size: 52px; font-weight: bold; margin-top: 20px; margin-bottom: 0px;'>Sign Up</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; color: #527a4d; font-size: 15px; font-weight: bold; margin-bottom: 30px;'>Create an account</p>", unsafe_allow_html=True)
         
         reg_email = st.text_input("Email", placeholder="Masukkan email baru", key="reg_e")
