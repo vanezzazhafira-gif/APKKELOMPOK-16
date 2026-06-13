@@ -5,8 +5,6 @@ import numpy as np
 from PIL import Image
 import tempfile
 import os
-import base64
-from io import BytesIO
 
 # Konfigurasi dasar page Streamlit wide
 st.set_page_config(page_title="Optimalisasi Logistik Pertanian", layout="wide")
@@ -14,26 +12,19 @@ st.set_page_config(page_title="Optimalisasi Logistik Pertanian", layout="wide")
 DB_LOGIN = "manajemen_akses.db"
 DB_ANALISIS = "logistik_hortikultura.db"
 
-# FUNGSI BASE64 PENCARI OTOMATIS (Mencegah logo hilang akibat beda nama file)
-def get_base64_logo_auto():
-    # Daftar nama file yang kemungkinan kamu gunakan di folder project
-    kemungkinan_nama_file = ["image_de8820.png", "image_de8b69.png", "logoo.jpg", "logo.png"]
-    
-    for nama_file in kemungkinan_nama_file:
-        if os.path.exists(nama_file):
+# FUNGSI LOAD IMAGE AMAN: Memastikan file logo benar-benar ada sebelum dipasang
+def muat_logo_kelompok():
+    # Daftar nama file logo yang kamu miliki di folder
+    daftar_nama = ["image_de8820.png", "image_de8b69.png", "logoo.jpg", "logo.png"]
+    for nama in daftar_nama:
+        if os.path.exists(nama):
             try:
-                img = Image.open(nama_file)
-                buffered = BytesIO()
-                # Paksa konversi ke PNG agar transparansi lingkaran tetap terjaga rapi
-                img.save(buffered, format="PNG")
-                img_str = base64.b64encode(buffered.getvalue()).decode()
-                return f"data:image/png;base64,{img_str}"
+                return Image.open(nama)
             except:
                 continue
-    return ""
+    return None
 
-# Ambil string logo secara otomatis dari file yang tersedia di foldermu
-LOGO_BASE64 = get_base64_logo_auto()
+LOGO_OBJEK = muat_logo_kelompok()
 
 # =========================================================
 # DATABASE INITIALIZATION
@@ -169,76 +160,54 @@ st.markdown("<style>header[data-testid='stHeader'] {display:none;}</style>", uns
 
 # --- 1. HALAMAN LOGIN ---
 if not st.session_state.login and st.session_state.page == "Login":
-    st.markdown(f"""
+    st.markdown("""
     <style>
-        .stApp {{ background-color: #f3f3f3 !important; }}
+        .stApp { background-color: #f3f3f3 !important; }
         
-        .circle-decor-top {{
+        .circle-decor-top {
             position: fixed;
             top: -110px; right: -90px;
             width: 290px; height: 290px;
             background-color: #437c37;
             border-radius: 50%;
             z-index: 0;
-        }}
-        .circle-decor-bottom {{
+        }
+        .circle-decor-bottom {
             position: fixed;
             bottom: -110px; left: -70px;
             width: 250px; height: 250px;
             background-color: #437c37;
             border-radius: 50%;
             z-index: 0;
-        }}
+        }
         
-        div[data-testid="stForm"] {{
+        div[data-testid="stForm"] {
             background-color: #ffffff !important;
             border: 1px solid #c0c0c0 !important;
             border-radius: 4px !important;
             box-shadow: 0px 4px 10px rgba(0,0,0,0.1) !important;
-            width: 420px !important;
+            width: 440px !important;
             margin: 40px auto !important;
             padding: 30px !important;
             font-family: sans-serif !important;
             position: relative !important;
             z-index: 10 !important;
-        }}
-        
-        .header-box-custom {{
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-        }}
-        .logo-img-custom {{
-            width: 90px;
-            height: 90px;
-            object-fit: contain;
-            margin-right: 15px;
-        }}
-        .title-text-custom {{
-            font-size: 32px;
-            font-weight: bold;
-            color: #000000;
-        }}
-        .subtitle-text-custom {{
-            font-size: 13.5px;
-            font-weight: bold;
-            color: #000000;
-            margin-bottom: 25px;
-            line-height: 1.4;
-        }}
+        }
     </style>
     <div class="circle-decor-top"></div>
     <div class="circle-decor-bottom"></div>
     """, unsafe_allow_html=True)
 
     with st.form("login_form_container", clear_on_submit=False):
-        st.markdown(f"""
-        <div class="header-box-custom">
-            <img class="logo-img-custom" src="{LOGO_BASE64}">
-            <span class="title-text-custom">Log In</span>
-        </div>
-        <div class="subtitle-text-custom">Aplikasi Prediksi Kadaluwarsa Produk Hortikultura</div>
-        """, unsafe_allow_html=True)
+        # Gunakan sistem kolom native Streamlit untuk meletakkan logo di sebelah judul teks Login
+        c_logo, c_text = st.columns([1, 2])
+        with c_logo:
+            if LOGO_OBJEK is not None:
+                st.image(LOGO_OBJEK, width=95)
+        with c_text:
+            st.markdown("<h1 style='margin:0; padding-top:10px; color:black;'>Log In</h1>", unsafe_allow_html=True)
+            
+        st.markdown("<p style='color: black; font-weight: bold; margin-top: 10px;'>Aplikasi Prediksi Kadaluwarsa Produk Hortikultura</p>", unsafe_allow_html=True)
         
         email = st.text_input("Username", key="login_email")
         password = st.text_input("Password", type="password", key="login_pass")
@@ -261,55 +230,32 @@ if not st.session_state.login and st.session_state.page == "Login":
 
 # --- 2. HALAMAN SIGN UP ---
 elif not st.session_state.login and st.session_state.page == "Sign Up":
-    st.markdown(f"""
+    st.markdown("""
     <style>
-        .stApp {{ background-color: #f3f3f3 !important; }}
+        .stApp { background-color: #f3f3f3 !important; }
         
-        div[data-testid="stForm"] {{
+        div[data-testid="stForm"] {
             background-color: #ffffff !important;
             border: 1px solid #c0c0c0 !important;
             border-radius: 4px !important;
             box-shadow: 0px 4px 10px rgba(0,0,0,0.1) !important;
-            width: 420px !important;
+            width: 440px !important;
             margin: 40px auto !important;
             padding: 30px !important;
             font-family: sans-serif !important;
-        }}
-        .signup-header-box {{
-            display: flex;
-            align-items: center;
-            margin-bottom: 5px;
-        }}
-        .signup-title {{
-            font-size: 34px;
-            font-weight: bold;
-            color: #000000;
-            margin: 0;
-        }}
-        .signup-subtitle {{
-            font-size: 19px;
-            font-weight: bold;
-            color: #437c37;
-            margin-top: 0px;
-            margin-bottom: 20px;
-        }}
-        .logo-signup-custom {{
-            width: 80px;
-            height: 80px;
-            object-fit: contain;
-            margin-right: 15px;
-        }}
+        }
     </style>
     """, unsafe_allow_html=True)
 
     with st.form("signup_form_container", clear_on_submit=False):
-        st.markdown(f"""
-        <div class="signup-header-box">
-            <img class="logo-signup-custom" src="{LOGO_BASE64}">
-            <span class="signup-title">Sign Up</span>
-        </div>
-        <div class="signup-subtitle">Create an account</div>
-        """, unsafe_allow_html=True)
+        c_logo, c_text = st.columns([1, 2])
+        with c_logo:
+            if LOGO_OBJEK is not None:
+                st.image(LOGO_OBJEK, width=90)
+        with c_text:
+            st.markdown("<h1 style='margin:0; padding-top:5px; color:black;'>Sign Up</h1>", unsafe_allow_html=True)
+            
+        st.markdown("<p style='color: #437c37; font-weight: bold; margin-top: 5px; margin-bottom: 15px;'>Create an account</p>", unsafe_allow_html=True)
         
         new_email = st.text_input("Email", key="su_email")
         new_password = st.text_input("Password", type="password", key="su_pass")
