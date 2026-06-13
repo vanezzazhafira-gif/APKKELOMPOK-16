@@ -6,12 +6,13 @@ from PIL import Image
 import os
 
 # ==============================================================================
-# 1. INISIALISASI DATABASE & LOGIKA SISTEM (TETAP SAMA / JANGAN DIUBAH)
+# 1. INISIALISASI DATABASE & LOGIKA SISTEM (OTOMATIS BERSIH SAAT RESTART)
 # ==============================================================================
 DB_LOGIN_PATH = "manajemen_akses.db"
 DB_ANALISIS_PATH = "logistik_hortikultura.db"
 
 def init_databases():
+    # Database Akun Pengguna
     conn = sqlite3.connect(DB_LOGIN_PATH)
     cursor = conn.cursor()
     cursor.execute("""
@@ -24,6 +25,7 @@ def init_databases():
     conn.commit()
     conn.close()
 
+    # Database Hasil Analisis Logistik
     conn = sqlite3.connect(DB_ANALISIS_PATH)
     cursor = conn.cursor()
     cursor.execute("""
@@ -35,6 +37,12 @@ def init_databases():
             suhu_simpan TEXT
         )
     """)
+    
+    # FIX: Setiap kali aplikasi dijalankan pertama kali, bersihkan hasil analisis lama
+    if "db_terbersihkan" not in st.session_state:
+        cursor.execute("DELETE FROM riwayat_pindai")
+        st.session_state.db_terbersihkan = True
+        
     conn.commit()
     conn.close()
 
@@ -90,7 +98,7 @@ def cek_kondisi_citra(cv_img, jenis):
     return jenis, status, sisa
 
 # ==============================================================================
-# 2. SEGMEN LAYOUT CSS (PERBAIKAN WARNA TEKS LABEL INPUT)
+# 2. SEGMEN LAYOUT CSS
 # ==============================================================================
 st.set_page_config(page_title="Optimalisasi Logistik Pertanian", layout="wide")
 
@@ -101,26 +109,22 @@ if "foto_input" not in st.session_state:
 
 st.markdown("""
 <style>
-    /* Paksa background aplikasi tetap putih bersih */
     .stApp {
         background-color: #ffffff !important;
     }
     header { visibility: hidden; }
     
-    /* FIX TOTAL: Memaksa tulisan Label di atas kolom input menjadi hitam pekat dan tebal */
     [data-testid="stWidgetLabel"] p {
         color: #000000 !important;
         font-weight: bold !important;
         font-size: 16px !important;
     }
     
-    /* Mengantisipasi elemen teks label pada versi Streamlit lama/baru */
     .stWidgetLabel, .stWidgetLabel p, label p {
         color: #000000 !important;
         font-weight: bold !important;
     }
     
-    /* Ornamen Lingkaran Hijau Kanan Atas */
     .bg-circle-top-right {
         position: fixed;
         width: 440px;
@@ -132,7 +136,6 @@ st.markdown("""
         z-index: 0;
     }
 
-    /* Ornamen Lingkaran Hijau Kiri Bawah */
     .bg-circle-bottom-left {
         position: fixed;
         width: 440px;
@@ -160,7 +163,6 @@ st.markdown("""
         width: 100%;
     }
     
-    /* Menyesuaikan teks di dalam kolom input agar kontras */
     .stTextInput>div>div>input {
         background-color: #ffffff !important;
         color: #000000 !important;
@@ -290,7 +292,7 @@ elif st.session_state.halaman == "signup":
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# 5. HALAMAN INTERFACE: DASHBOARD UTAMA MONITORING (TETAP AMAN)
+# 5. HALAMAN INTERFACE: DASHBOARD UTAMA MONITORING
 # ==============================================================================
 elif st.session_state.halaman == "dashboard":
     st.markdown("""
@@ -318,11 +320,16 @@ elif st.session_state.halaman == "dashboard":
             else:
                 st.image(st.session_state.foto_input, use_container_width=True)
                 
+        # Input berkas gambar manual
         file_terunggah = st.file_uploader("Unggah berkas foto atau gambar sayur:", type=["jpg", "png", "jpeg"])
         if file_terunggah:
             st.session_state.foto_input = Image.open(file_terunggah)
             
-        st.button("📸 Buka Kamera", use_container_width=True)
+        # FIX KAMERA: Menggunakan widget kamera asli Streamlit agar bisa menangkap gambar secara real-time
+        ambil_kamera = st.camera_input("📸 Ambil Foto langsung dari Kamera:")
+        if ambil_kamera:
+            st.session_state.foto_input = Image.open(ambil_kamera)
+        
         st.button("📁 Pilih Foto dari Galeri", use_container_width=True)
         st.button("🎯 Tandai Area Sayur (ROI)", use_container_width=True)
         
@@ -347,7 +354,7 @@ elif st.session_state.halaman == "dashboard":
                     
                     conn = sqlite3.connect(DB_ANALISIS_PATH)
                     cursor = conn.cursor()
-                    cursor.execute("DELETE FROM riwayat_pindai")
+                    cursor.execute("DELETE FROM riwayat_pindai") # Bersihkan riwayat lama saat di-scan ulang
                     cursor.execute("""
                         INSERT INTO riwayat_pindai (komoditas, kondisi, sisa_segar, suhu_simpan)
                         VALUES (?, ?, ?, ?)
