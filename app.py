@@ -5,6 +5,7 @@ import numpy as np
 from PIL import Image
 import tempfile
 import os
+import base64
 
 # Konfigurasi dasar page Streamlit wide
 st.set_page_config(page_title="Optimalisasi Logistik Pertanian", layout="wide")
@@ -12,8 +13,16 @@ st.set_page_config(page_title="Optimalisasi Logistik Pertanian", layout="wide")
 DB_LOGIN = "manajemen_akses.db"
 DB_ANALISIS = "logistik_hortikultura.db"
 
-# URL Logo Resmi Kelompok 16
-LOGO_URL = "https://raw.githubusercontent.com/vanezzahafira-gif/APKKELOMPOK-16/main/login.jpeg"
+# Fungsi untuk mengonversi gambar lokal menjadi Base64 agar pasti muncul di HTML
+def get_base64_image(image_path):
+    if os.path.exists(image_path):
+        with open(image_path, "rb") as img_file:
+            return f"data:image/jpeg;base64,{base64.b64encode(img_file.read()).decode()}"
+    # Jika file tidak ditemukan, gunakan placeholder gambar kosong agar sistem tidak crash
+    return "https://via.placeholder.com/150"
+
+# Mengambil file gambar lokal bernama login.jpeg di folder yang sama dengan app.py
+LOGO_BASE64 = get_base64_image("login.jpeg")
 
 # =========================================================
 # DATABASE INITIALIZATION
@@ -135,7 +144,7 @@ if "hasil" not in st.session_state:
 if "riwayat_session" not in st.session_state: 
     st.session_state.riwayat_session = []
 
-# Sembunyikan elemen header default Streamlit agar terlihat clean
+# Sembunyikan komponen header bawaan streamlit agar bersih
 st.markdown("<style>header[data-testid='stHeader'] {display:none;}</style>", unsafe_allow_html=True)
 
 # =========================================================
@@ -165,7 +174,6 @@ if not st.session_state.login and st.session_state.page == "Login":
             z-index: 0;
         }}
         
-        /* Memaksa box form bawaan streamlit masuk ke tengah secara presisi */
         div[data-testid="stForm"] {{
             background-color: #ffffff !important;
             border: 1px solid #c0c0c0 !important;
@@ -212,7 +220,7 @@ if not st.session_state.login and st.session_state.page == "Login":
     with st.form("login_form_container", clear_on_submit=False):
         st.markdown(f"""
         <div class="header-box-custom">
-            <img class="logo-img-custom" src="{LOGO_URL}">
+            <img class="logo-img-custom" src="{LOGO_BASE64}">
             <span class="title-text-custom">Log In</span>
         </div>
         <div class="subtitle-text-custom">Aplikasi Prediksi Kadaluwarsa Produk Hortikultura</div>
@@ -310,9 +318,9 @@ elif not st.session_state.login and st.session_state.page == "Sign Up":
             st.session_state.page = "Login"
             st.rerun()
             
-        st.markdown(f'<div class="logo-bottom-container"><img class="logo-bottom-img" src="{LOGO_URL}"></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="logo-bottom-container"><img class="logo-bottom-img" src="{LOGO_BASE64}"></div>', unsafe_allow_html=True)
 
-# --- 3. DASHBOARD UTAMA (PRESIMA 100% SESUAI DESIGNER) ---
+# --- 3. DASHBOARD UTAMA ---
 else:
     st.markdown("""
     <style>
@@ -379,7 +387,6 @@ else:
             text-align: left;
         }
 
-        /* Merapikan letak tombol grid kotak */
         .stButton>button {
             border-radius: 0px !important;
             font-family: sans-serif !important;
@@ -420,7 +427,6 @@ else:
         else:
             st.markdown('<div class="qt-preview-box">[ Preview ]</div>', unsafe_allow_html=True)
 
-        # Baris tombol diletakkan rapi ke bawah panel input scanner
         col_b1, col_b2 = st.columns(2)
         with col_b1:
             st.markdown('<div class="col-blue-btn">', unsafe_allow_html=True)
@@ -499,7 +505,7 @@ Suhu Simpan : {res["suhu"]}"""
         
         st.markdown(f'<div class="qt-terminal-result">{text_output}</div>', unsafe_allow_html=True)
         
-        # Tabel Riwayat Logistik ditaruh paling bawah dalam dashboard panel kanan
+        # Tabel Riwayat Logistik
         st.dataframe(
             st.session_state.riwayat_session,
             use_container_width=True,
