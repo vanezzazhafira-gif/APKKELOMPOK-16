@@ -135,7 +135,7 @@ if "hasil" not in st.session_state:
 if "riwayat_session" not in st.session_state: 
     st.session_state.riwayat_session = []
 
-# Sembunyikan komponen header bawaan streamlit agar bersih
+# Sembunyikan elemen header default Streamlit agar terlihat clean
 st.markdown("<style>header[data-testid='stHeader'] {display:none;}</style>", unsafe_allow_html=True)
 
 # =========================================================
@@ -144,7 +144,6 @@ st.markdown("<style>header[data-testid='stHeader'] {display:none;}</style>", uns
 
 # --- 1. HALAMAN LOGIN ---
 if not st.session_state.login and st.session_state.page == "Login":
-    # Menyeimbangkan CSS background lingkaran hijau di luar, kotak putih di tengah
     st.markdown(f"""
     <style>
         .stApp {{ background-color: #f3f3f3 !important; }}
@@ -166,7 +165,7 @@ if not st.session_state.login and st.session_state.page == "Login":
             z-index: 0;
         }}
         
-        /* Modifikasi Form Box Bawaan Streamlit */
+        /* Memaksa box form bawaan streamlit masuk ke tengah secara presisi */
         div[data-testid="stForm"] {{
             background-color: #ffffff !important;
             border: 1px solid #c0c0c0 !important;
@@ -210,7 +209,6 @@ if not st.session_state.login and st.session_state.page == "Login":
     <div class="circle-decor-bottom"></div>
     """, unsafe_allow_html=True)
 
-    # Membuka Form Kotak Putih yang membungkus semua objek di dalamnya
     with st.form("login_form_container", clear_on_submit=False):
         st.markdown(f"""
         <div class="header-box-custom">
@@ -314,7 +312,7 @@ elif not st.session_state.login and st.session_state.page == "Sign Up":
             
         st.markdown(f'<div class="logo-bottom-container"><img class="logo-bottom-img" src="{LOGO_URL}"></div>', unsafe_allow_html=True)
 
-# --- 3. DASHBOARD UTAMA ---
+# --- 3. DASHBOARD UTAMA (PRESIMA 100% SESUAI DESIGNER) ---
 else:
     st.markdown("""
     <style>
@@ -381,6 +379,7 @@ else:
             text-align: left;
         }
 
+        /* Merapikan letak tombol grid kotak */
         .stButton>button {
             border-radius: 0px !important;
             font-family: sans-serif !important;
@@ -421,6 +420,7 @@ else:
         else:
             st.markdown('<div class="qt-preview-box">[ Preview ]</div>', unsafe_allow_html=True)
 
+        # Baris tombol diletakkan rapi ke bawah panel input scanner
         col_b1, col_b2 = st.columns(2)
         with col_b1:
             st.markdown('<div class="col-blue-btn">', unsafe_allow_html=True)
@@ -499,7 +499,7 @@ Suhu Simpan : {res["suhu"]}"""
         
         st.markdown(f'<div class="qt-terminal-result">{text_output}</div>', unsafe_allow_html=True)
         
-        # Tabel Riwayat Logistik Kosong Sejak Awal (Hanya Terisi Setelah Scan Sukses)
+        # Tabel Riwayat Logistik ditaruh paling bawah dalam dashboard panel kanan
         st.dataframe(
             st.session_state.riwayat_session,
             use_container_width=True,
