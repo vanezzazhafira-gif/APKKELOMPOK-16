@@ -135,7 +135,7 @@ if "hasil" not in st.session_state:
 if "riwayat_session" not in st.session_state: 
     st.session_state.riwayat_session = []
 
-# Sembunyikan elemen header default Streamlit
+# Sembunyikan komponen header bawaan streamlit agar bersih
 st.markdown("<style>header[data-testid='stHeader'] {display:none;}</style>", unsafe_allow_html=True)
 
 # =========================================================
@@ -144,27 +144,46 @@ st.markdown("<style>header[data-testid='stHeader'] {display:none;}</style>", uns
 
 # --- 1. HALAMAN LOGIN ---
 if not st.session_state.login and st.session_state.page == "Login":
+    # Menyeimbangkan CSS background lingkaran hijau di luar, kotak putih di tengah
     st.markdown(f"""
     <style>
         .stApp {{ background-color: #f3f3f3 !important; }}
-        .login-bg-container {{
-            position: relative;
-            background-color: #ffffff;
-            width: 420px;
-            height: 560px;
-            margin: 40px auto;
-            border: 1px solid #c0c0c0;
-            border-radius: 4px;
-            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
-            font-family: sans-serif;
-            padding: 30px;
-            box-sizing: border-box;
+        
+        .circle-decor-top {{
+            position: fixed;
+            top: -110px; right: -90px;
+            width: 290px; height: 290px;
+            background-color: #437c37;
+            border-radius: 50%;
+            z-index: 0;
         }}
+        .circle-decor-bottom {{
+            position: fixed;
+            bottom: -110px; left: -70px;
+            width: 250px; height: 250px;
+            background-color: #437c37;
+            border-radius: 50%;
+            z-index: 0;
+        }}
+        
+        /* Modifikasi Form Box Bawaan Streamlit */
+        div[data-testid="stForm"] {{
+            background-color: #ffffff !important;
+            border: 1px solid #c0c0c0 !important;
+            border-radius: 4px !important;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1) !important;
+            width: 420px !important;
+            margin: 40px auto !important;
+            padding: 30px !important;
+            font-family: sans-serif !important;
+            position: relative !important;
+            z-index: 10 !important;
+        }}
+        
         .header-box-custom {{
             display: flex;
             align-items: center;
-            margin-bottom: 25px;
-            position: relative;
+            margin-bottom: 20px;
         }}
         .logo-img-custom {{
             width: 85px;
@@ -175,95 +194,69 @@ if not st.session_state.login and st.session_state.page == "Login":
             margin-right: 15px;
         }}
         .title-text-custom {{
-            font-size: 28px;
+            font-size: 32px;
             font-weight: bold;
             color: #000000;
-            margin: 0;
         }}
         .subtitle-text-custom {{
             font-size: 13.5px;
             font-weight: bold;
             color: #000000;
-            margin-top: 15px;
             margin-bottom: 25px;
             line-height: 1.4;
         }}
-        .footer-login-custom {{
-            margin-top: 30px;
-            font-size: 13.5px;
-            color: #000000;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }}
-        /* Menghilangkan margin bawaan widget streamlit di dalam box */
-        div[data-testid="stVerticalBlock"] > div {{
-            margin-bottom: 0px !important;
-        }}
     </style>
+    <div class="circle-decor-top"></div>
+    <div class="circle-decor-bottom"></div>
     """, unsafe_allow_html=True)
 
-    # Membuka pembungkus form kotak putih tunggal
-    st.markdown('<div class="login-bg-container">', unsafe_allow_html=True)
-    
-    # Elemen Header Atas (Logo + Tulisan Log In)
-    st.markdown(f"""
-    <div class="header-box-custom">
-        <img class="logo-img-custom" src="{LOGO_URL}">
-        <span class="title-text-custom">Log In</span>
-    </div>
-    <div class="subtitle-text-custom">Aplikasi Prediksi Kadaluwarsa Produk Hortikultura</div>
-    """, unsafe_allow_html=True)
-    
-    # Elemen Form Isian
-    email = st.text_input("Username", key="login_email")
-    password = st.text_input("Password", type="password", key="login_pass")
-    
-    st.write("")
-    
-    # Tombol LOG IN Utama
-    if st.button("LOG IN", use_container_width=True, type="primary", key="btn_execute_login"):
-        if login(email, password):
-            st.session_state.login = True
+    # Membuka Form Kotak Putih yang membungkus semua objek di dalamnya
+    with st.form("login_form_container", clear_on_submit=False):
+        st.markdown(f"""
+        <div class="header-box-custom">
+            <img class="logo-img-custom" src="{LOGO_URL}">
+            <span class="title-text-custom">Log In</span>
+        </div>
+        <div class="subtitle-text-custom">Aplikasi Prediksi Kadaluwarsa Produk Hortikultura</div>
+        """, unsafe_allow_html=True)
+        
+        email = st.text_input("Username", key="login_email")
+        password = st.text_input("Password", type="password", key="login_pass")
+        
+        st.write("")
+        btn_login = st.form_submit_button("LOG IN", use_container_width=True, type="primary")
+        
+        if btn_login:
+            if login(email, password):
+                st.session_state.login = True
+                st.rerun()
+            else:
+                st.error("Username atau Password Salah")
+                
+        st.write("---")
+        st.write("Have not account?")
+        if st.form_submit_button("Create Account"):
+            st.session_state.page = "Sign Up"
             st.rerun()
-        else:
-            st.error("Username atau Password Salah")
-            
-    st.write("---")
-    
-    # Bagian Footer Bawah untuk Navigasi Buat Akun (Tetap di dalam Kotak)
-    st.markdown('<div class="footer-login-custom"><span>Have not account?</span>', unsafe_allow_html=True)
-    if st.button("Create Account", key="go_signup"):
-        st.session_state.page = "Sign Up"
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Menutup pembungkus form kotak putih tunggal
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # --- 2. HALAMAN SIGN UP ---
 elif not st.session_state.login and st.session_state.page == "Sign Up":
     st.markdown(f"""
     <style>
         .stApp {{ background-color: #f3f3f3 !important; }}
-        .signup-bg-container {{
-            background-color: #ffffff;
-            width: 420px;
-            height: 590px;
-            margin: 30px auto;
-            border: 1px solid #c0c0c0;
-            border-radius: 4px;
-            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
-            font-family: sans-serif;
-            padding: 30px;
-            box-sizing: border-box;
-            position: relative;
-        }}
-        .signup-header {{
-            margin-bottom: 20px;
+        
+        div[data-testid="stForm"] {{
+            background-color: #ffffff !important;
+            border: 1px solid #c0c0c0 !important;
+            border-radius: 4px !important;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1) !important;
+            width: 420px !important;
+            margin: 40px auto !important;
+            padding: 30px !important;
+            font-family: sans-serif !important;
         }}
         .signup-title {{
-            font-size: 34px;
+            font-size: 36px;
             font-weight: bold;
             color: #000000;
             margin: 0;
@@ -278,7 +271,7 @@ elif not st.session_state.login and st.session_state.page == "Sign Up":
         .logo-bottom-container {{
             display: flex;
             justify-content: center;
-            margin-top: 25px;
+            margin-top: 20px;
         }}
         .logo-bottom-img {{
             width: 80px;
@@ -287,51 +280,39 @@ elif not st.session_state.login and st.session_state.page == "Sign Up":
             object-fit: cover;
             border: 1px solid #ddd;
         }}
-        .footer-signup-custom {{
-            margin-top: 20px;
-            font-size: 13.5px;
-            color: #000000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }}
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="signup-bg-container">', unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div class="signup-header">
+    with st.form("signup_form_container", clear_on_submit=False):
+        st.markdown("""
         <div class="signup-title">Sign Up</div>
         <div class="signup-subtitle">Create an account</div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    new_email = st.text_input("Email", key="su_email")
-    new_password = st.text_input("Password", type="password", key="su_pass")
-    confirm = st.text_input("Confirm Password", type="password", key="su_confirm")
-    
-    st.write("")
-    if st.button("Sign Up", use_container_width=True, type="primary", key="do_signup_action"):
-        if new_password == confirm:
-            if signup(new_email, new_password):
-                st.success("Akun berhasil dibuat!")
-                st.session_state.page = "Login"
-                st.rerun()
-            else: st.error("Email sudah terdaftar.")
-        else: st.error("Password tidak cocok.")
+        """, unsafe_allow_html=True)
         
-    st.markdown('<div class="footer-signup-custom"><span>Already have an account?</span>', unsafe_allow_html=True)
-    if st.button("Log In", key="back_to_login"):
-        st.session_state.page = "Login"
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Logo kelompok di bagian bawah dalam box sign up
-    st.markdown(f'<div class="logo-bottom-container"><img class="logo-bottom-img" src="{LOGO_URL}"></div>', unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+        new_email = st.text_input("Email", key="su_email")
+        new_password = st.text_input("Password", type="password", key="su_pass")
+        confirm = st.text_input("Confirm Password", type="password", key="su_confirm")
+        
+        st.write("")
+        btn_signup = st.form_submit_button("Sign Up", use_container_width=True, type="primary")
+        
+        if btn_signup:
+            if new_password == confirm:
+                if signup(new_email, new_password):
+                    st.success("Akun berhasil dibuat!")
+                    st.session_state.page = "Login"
+                    st.rerun()
+                else:
+                    st.error("Email sudah terdaftar.")
+            else:
+                st.error("Password tidak cocok.")
+                
+        st.write("Already have an account?")
+        if st.form_submit_button("Log In"):
+            st.session_state.page = "Login"
+            st.rerun()
+            
+        st.markdown(f'<div class="logo-bottom-container"><img class="logo-bottom-img" src="{LOGO_URL}"></div>', unsafe_allow_html=True)
 
 # --- 3. DASHBOARD UTAMA ---
 else:
@@ -518,7 +499,7 @@ Suhu Simpan : {res["suhu"]}"""
         
         st.markdown(f'<div class="qt-terminal-result">{text_output}</div>', unsafe_allow_html=True)
         
-        # Tabel Riwayat Logistik
+        # Tabel Riwayat Logistik Kosong Sejak Awal (Hanya Terisi Setelah Scan Sukses)
         st.dataframe(
             st.session_state.riwayat_session,
             use_container_width=True,
