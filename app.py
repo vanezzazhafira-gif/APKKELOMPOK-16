@@ -5,7 +5,18 @@ import numpy as np
 from PIL import Image
 import os
 import time
-from streamlit_cropper import st_cropper
+import sys
+import subprocess
+
+# ==============================================================================
+# OMATISASI INSTALASI LIBRARY (LANGSUNG DARI KODE)
+# ==============================================================================
+try:
+    from streamlit_cropper import st_cropper
+except ImportError:
+    # Jika streamlit-cropper belum ada, instal otomatis lewat background process
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "streamlit-cropper"])
+    from streamlit_cropper import st_cropper
 
 # ==============================================================================
 # 1. INISIALISASI DATABASE & LOGIKA SISTEM (OTOMATIS BERSIH SAAT RESTART)
@@ -40,7 +51,7 @@ def init_databases():
         )
     """)
     
-    # Setiap kali aplikasi dijalankan pertama kali, bersihkan riwayat lama
+    # Setiap kali aplikasi dimuat ulang, bersihkan riwayat lama agar fresh
     if "db_terbersihkan" not in st.session_state:
         cursor.execute("DELETE FROM riwayat_pindai")
         st.session_state.db_terbersihkan = True
@@ -329,20 +340,19 @@ elif st.session_state.halaman == "dashboard":
         st.markdown("### **Panel Input Scanner**")
         pilihan_sayur = st.selectbox("Komoditas:", ["Wortel", "Cabai", "Brokoli"], label_visibility="visible")
         
-        # Kontainer Preview Gambar / ROI Box Interaktif
+        # Area Pratinjau Gambar / Kotak ROI Dinamis
         with st.container(border=True):
             if st.session_state.foto_input is None:
                 st.markdown("<div style='height: 250px; background-color: #e8e8e8; display: flex; align-items: center; justify-content: center; border-radius:4px; color:#555;'><B>[ Preview ]</B></div>", unsafe_allow_html=True)
             else:
-                # FIX: Jika tombol ROI aktif, tampilkan pemotong gambar interaktif
                 if st.session_state.aktifkan_roi:
-                    st.markdown("<p style='color:blue; font-size:12px; margin:0;'>Silakan sesuaikan kotak pembatas di bawah untuk menandai area sayur:</p>", unsafe_allow_html=True)
+                    st.markdown("<p style='color:#ff4b4b; font-size:13px; font-weight:bold; margin:0;'>Geser/atur kotak merah di bawah untuk menandai area objek:</p>", unsafe_allow_html=True)
                     cropped_img = st_cropper(st.session_state.foto_input, realtime_update=True, box_color='#FF0000', aspect_ratio=None)
                     st.session_state.foto_terpotong = cropped_img
                 else:
                     st.image(st.session_state.foto_input, use_container_width=True)
                 
-        # Tombol Pemicu Menu Utama
+        # Tombol Pemicu Pemasukan Gambar
         col_m1, col_m2 = st.columns(2)
         with col_m1:
             if st.button("Pilih Foto dari Galeri", use_container_width=True):
@@ -353,19 +363,17 @@ elif st.session_state.halaman == "dashboard":
                 st.session_state.mode_input = "kamera"
                 st.session_state.aktifkan_roi = False
 
-        # Tampilan Unggah Berkas
         if st.session_state.mode_input == "galeri":
             file_terunggah = st.file_uploader("Unggah berkas foto atau gambar sayur:", type=["jpg", "png", "jpeg"])
             if file_terunggah:
                 st.session_state.foto_input = Image.open(file_terunggah)
                 
-        # Tampilan Kamera Aktif
         if st.session_state.mode_input == "kamera":
             ambil_kamera = st.camera_input("Ambil Foto langsung dari Kamera:")
             if ambil_kamera:
                 st.session_state.foto_input = Image.open(ambil_kamera)
         
-        # FIX: Tombol ROI untuk mengaktifkan kotak penandaan area sayur
+        # Fungsi penandaan area (ROI) kini aktif bergantian (toggle) untuk memanggil cropper
         if st.button("Tandai Area Sayur (ROI)", use_container_width=True):
             if st.session_state.foto_input is not None:
                 st.session_state.aktifkan_roi = not st.session_state.aktifkan_roi
@@ -377,7 +385,6 @@ elif st.session_state.halaman == "dashboard":
         btn_proses_analisis = st.button("Jalankan Analisis", use_container_width=True, type="primary")
         
         if btn_proses_analisis:
-            # Gunakan foto hasil ROI jika diaktifkan, jika tidak gunakan foto original asli
             foto_final = st.session_state.foto_terpotong if (st.session_state.aktifkan_roi and st.session_state.foto_terpotong is not None) else st.session_state.foto_input
             
             if foto_final is None:
@@ -397,8 +404,10 @@ elif st.session_state.halaman == "dashboard":
                     
                     conn = sqlite3.connect(DB_ANALISIS_PATH)
                     cursor = conn.cursor()
-                    # FIX: Bersihkan riwayat lama agar tabel dan dashboard hanya menampilkan hasil terbaru
+                    
+                    # Bersihkan data lama di tabel database sebelum menyimpan data hasil pemindaian yang baru
                     cursor.execute("DELETE FROM riwayat_pindai") 
+                    
                     cursor.execute("""
                         INSERT INTO riwayat_pindai (komoditas, kondisi, sisa_segar, suhu_simpan)
                         VALUES (?, ?, ?, ?)
@@ -414,7 +423,7 @@ elif st.session_state.halaman == "dashboard":
         
         conn = sqlite3.connect(DB_ANALISIS_PATH)
         cursor = conn.cursor()
-        # Mengambil hasil yang paling baru (data teratas/terakhir)
+        # Mengambil baris data yang paling terakhir/terbaru dimasukkan saja (LIMIT 1)
         cursor.execute("SELECT id, komoditas, kondisi, sisa_segar, suhu_simpan FROM riwayat_pindai ORDER BY id DESC LIMIT 1")
         isi_tabel = cursor.fetchall()
         conn.close()
@@ -434,7 +443,7 @@ elif st.session_state.halaman == "dashboard":
         </div>
         """, unsafe_allow_html=True)
         
-        # FIX: Tabel visual data historis sekarang dibatasi hanya menampilkan hasil pemindaian terbaru saja
+        # Komponen tabel di bawah ini otomatis hanya berisi 1 baris (pemindaian terakhir)
         if isi_tabel:
             import pandas as pd
             df_monitor = pd.DataFrame(isi_tabel, columns=["ID", "Nama", "Kondisi", "Sisa", "Suhu"])
